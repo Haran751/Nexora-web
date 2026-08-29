@@ -17,12 +17,15 @@ export default function LandingPage() {
               <HeroArt width={767} height={633} />
             </div>
             <div>
-              <div className="hero-box">
-                <span className="bar bar--long" />
-                <span className="bar bar--semi" />
-                <span className="bar bar--short" />
-                <div className="hero-box__cta">
-                  <CtaButton to="/signup">Get Started</CtaButton>
+              <div className="hero-tagline-card">
+                <h1 className="hero-tagline-card__title">
+                  Your friend in getting into your next job, <span className="hero-tagline-card__brand">Nexora</span>
+                </h1>
+                <p className="hero-tagline-card__ready">Ready?</p>
+                <div className="hero-tagline-card__cta">
+                  <CtaButton to="/signup" variant="glow">
+                    Get Started
+                  </CtaButton>
                 </div>
               </div>
             </div>
