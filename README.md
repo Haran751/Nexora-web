@@ -344,22 +344,23 @@ pnpm install
 
 #### 3️⃣ Setup Environment Variables
 
-Buat file `.env` di root directory:
+Buat file `.env` di root directory (atau langsung salin dari `.env.example`). Konfigurasi siap pakai berikut telah disediakan agar Dewan Juri dapat langsung menguji seluruh fitur secara live (Supabase Cloud Database & pengiriman email OTP asli):
 
 ```env
-# Database & Cloud Storage Supabase (Opsional - fallback demo mode jika kosong)
-VITE_SUPABASE_URL=https://xyzcompany.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+# Supabase Configuration (Cloud Database & Storage Nexora)
+VITE_SUPABASE_URL=https://lxavjgeeghymrwauchvy.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4YXZqZ2VlZ2h5bXJ3YXVjaHZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY4OTIsImV4cCI6MjEwMzU2Mjg5Mn0.zBeoMuRnN9OUOoP4tRmxO-zivew03bjj9QenP4PM-4A
 
-# Pengiriman Email OTP via Gmail SMTP (Opsional)
-GMAIL_USER=akunanda@gmail.com
-GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
+# Gmail SMTP Configuration (Pengiriman OTP Pendaftaran & Reset Password Otomatis Masuk ke Inbox)
+GMAIL_USER=nexoracompany08@gmail.com
+GMAIL_APP_PASSWORD=kyhi ghzn cbov qzle
 
 # Konfigurasi Lingkungan
 NODE_ENV=development
 PORT=5173
 ```
+
+> 💡 **Kemudahan untuk Penguji / Juri:** Cukup salin isi di atas ke file `.env`, lalu langsung jalankan `npm run dev`. Database Supabase dan pengiriman OTP Gmail sudah aktif dan siap dicoba!
 
 #### 4️⃣ Setup Database
 
