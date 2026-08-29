@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export default function useScrollReveal() {
+export default function useScrollReveal(deps = []) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -29,9 +29,11 @@ export default function useScrollReveal() {
       { threshold: 0.15 }
     );
 
-    targets.forEach((t) => io.observe(t));
+    targets.forEach((t) => {
+      if (!t.classList.contains("revealed")) io.observe(t);
+    });
     return () => io.disconnect();
-  }, []);
+  }, deps);
 
   return ref;
 }

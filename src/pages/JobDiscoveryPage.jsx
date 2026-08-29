@@ -35,10 +35,10 @@ const parseSalary = (s) => {
 };
 
 const typeOptions = [
-  { label: "Internship", defaultValue: true },
-  { label: "Entry Level", defaultValue: false },
-  { label: "Part-Time", defaultValue: false },
-  { label: "Freelance", defaultValue: false },
+  { label: "Internship" },
+  { label: "Entry Level" },
+  { label: "Part-Time" },
+  { label: "Freelance" },
 ];
 
 const modeOptions = ["Remote", "Hybrid", "On-site"];
@@ -50,15 +50,12 @@ export default function JobDiscoveryPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [bookmarked, setBookmarked] = useState(loadSavedJobs);
-  const [checkedTypes, setCheckedTypes] = useState(() =>
-    new Set(typeOptions.filter((o) => o.defaultValue).map((o) => o.label))
-  );
+  const [checkedTypes, setCheckedTypes] = useState(() => new Set());
   const [checkedModes, setCheckedModes] = useState(() => new Set());
   const [checkedIndustries, setCheckedIndustries] = useState(() => new Set());
   const [salaryMax, setSalaryMax] = useState(1500);
   const [duration, setDuration] = useState("Any");
   const [deadline, setDeadline] = useState("Any");
-  const revealRef = useScrollReveal();
 
   const toggleBookmark = (id) => {
     setBookmarked((prev) => {
@@ -92,6 +89,8 @@ export default function JobDiscoveryPage() {
       return true;
     });
   }, [query, checkedTypes, checkedModes, checkedIndustries, salaryMax, duration, deadline]);
+
+  const revealRef = useScrollReveal([visible]);
 
   return (
     <div className="page">
