@@ -34,7 +34,7 @@ export default function Footer() {
       <div className="app-footer__grid">
         <div className="app-footer__brand">
           <div className="app-footer__logo">
-            <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" />
+            <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" loading="lazy" decoding="async" />
             <span>Nexora</span>
           </div>
           <p>Find Your Opportunity Yourself. We&apos;ll help.</p>

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
 import { loadProfile, saveProfile, DEFAULT_PROFILE } from "../lib/profile.js";
 import { sendOtpEmail } from "../lib/sendOtp.js";
+import { isValidEmail, sanitizeText } from "../lib/security.js";
 
 const AuthContext = createContext(null);
 
@@ -185,8 +186,9 @@ export function AuthProvider({ children }) {
   async function verifyOtp({ email, token, type = "signup" }) {
     const savedCode = getStoredOtp(email);
 
-    // Validasi token cocok dengan kode yang dikirim ke email
-    if (token !== savedCode && token !== "123456") {
+    // Bypass "123456" hanya diizinkan pada offline demo mode jika Supabase belum dikonfigurasi (untuk memudahkan penjurian lomba)
+    const allowDemoBypass = !isSupabaseConfigured && token === "123456";
+    if (token !== savedCode && !allowDemoBypass) {
       throw new Error("Kode OTP salah atau tidak cocok. Periksa email Anda.");
     }
 
@@ -277,53 +279,49 @@ export function AuthProvider({ children }) {
   async function updateUserPassword(payload) {
     const newPassword = typeof payload === "string" ? payload : payload?.newPassword;
     const email = typeof payload === "object" ? payload?.email : user?.email;
+    const token = typeof payload === "object" ? payload?.token : null;
 
-    if (!newPassword) throw new Error("Password baru wajib diisi.");
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error("Password baru minimal 6 karakter.");
+    }
 
-    // 1. Coba panggil server endpoint /api/update-password
+    // 1. Panggil server endpoint /api/update-password dengan token otorisasi
     try {
       const res = await fetch("/api/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, newPassword }),
+        body: JSON.stringify({ email, newPassword, token }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         return { success: true };
       }
-    } catch (apiErr) {
-      console.warn("API /api/update-password call error:", apiErr);
-    }
-
-    // 2. Fallback direct client RPC ke Supabase jika fungsi reset_password_by_email ada
-    if (isSupabaseConfigured && email) {
-      try {
-        const { data: rpcSuccess, error: rpcErr } = await supabase.rpc("reset_password_by_email", {
-          user_email: email.trim(),
-          new_plain_password: newPassword,
-        });
-        if (!rpcErr && rpcSuccess) {
-          return { success: true };
-        }
-      } catch (e) {
-        console.warn("RPC reset_password_by_email error:", e);
+      if (!res.ok && data.error) {
+        throw new Error(data.error);
       }
-    }
+    } catch (apiErr) {
+      console.warn("API /api/update-password error:", apiErr.message);
 
-    // 3. Jika user sedang aktif login di session
-    if (isSupabaseConfigured && user) {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (!error) return { success: true };
-    }
+      // 2. Jika user sedang aktif login di session resmi Supabase
+      if (isSupabaseConfigured && user) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (!error) return { success: true };
+      }
 
-    // 4. Update local demo storage jika ada
-    const savedDemo = localStorage.getItem(DEMO_USER_KEY);
-    if (savedDemo) {
-      try {
-        const parsed = JSON.parse(savedDemo);
-        parsed.password = newPassword;
-        localStorage.setItem(DEMO_USER_KEY, JSON.stringify(parsed));
-      } catch {}
+      // 3. Fallback demo storage jika berjalan tanpa Supabase (offline demo penjurian)
+      if (!isSupabaseConfigured) {
+        const savedDemo = localStorage.getItem(DEMO_USER_KEY);
+        if (savedDemo) {
+          try {
+            const parsed = JSON.parse(savedDemo);
+            parsed.updatedAt = new Date().toISOString();
+            localStorage.setItem(DEMO_USER_KEY, JSON.stringify(parsed));
+          } catch {}
+        }
+        return { success: true, demo: true };
+      }
+
+      throw apiErr;
     }
 
     return { success: true };

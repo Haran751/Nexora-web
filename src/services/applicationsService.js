@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
+import { sanitizeText, sanitizeUrl } from "../lib/security.js";
 
 const LOCAL_APPS_KEY = "nexora_local_apps_v1";
 
@@ -97,6 +98,9 @@ export async function submitApplication({ jobId, jobTitle, company, applicantId,
   const dateStr = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const initialTimeline = [{ label: "Application sent", date: dateStr }];
 
+  const safeCoverNote = sanitizeText(coverNote || "", 3000);
+  const safeResumeUrl = resumeUrl ? sanitizeUrl(resumeUrl) || "" : "";
+
   if (isSupabaseConfigured && isValidUuid(applicantId) && isValidUuid(jobId)) {
     const { data, error } = await supabase
       .from("applications")
@@ -104,8 +108,8 @@ export async function submitApplication({ jobId, jobTitle, company, applicantId,
         job_id: jobId,
         applicant_id: applicantId,
         status: "Applied",
-        cover_note: coverNote || "",
-        resume_url: resumeUrl || "",
+        cover_note: safeCoverNote,
+        resume_url: safeResumeUrl,
         timeline: initialTimeline,
       })
       .select()
@@ -203,7 +207,21 @@ export async function getEmployerCandidates(employerId) {
   return [];
 }
 
+const VALID_STATUSES = new Set([
+  "Applied",
+  "Viewed",
+  "In Review",
+  "Shortlisted",
+  "Interview",
+  "Accepted",
+  "Rejected",
+]);
+
 export async function updateCandidateStatus(applicationId, newStatus) {
+  if (!VALID_STATUSES.has(newStatus)) {
+    throw new Error("Invalid application status.");
+  }
+
   if (isSupabaseConfigured && isValidUuid(applicationId)) {
     const { error } = await supabase
       .from("applications")

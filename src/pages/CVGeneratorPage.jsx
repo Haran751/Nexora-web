@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import { loadProfile } from "../lib/profile.js";
+import { sanitizeUrl } from "../lib/security.js";
 
 const TEMPLATES = ["Classic", "Modern", "Minimal"];
 
@@ -74,7 +75,11 @@ function ClassicSheet({ p }) {
             <div className="cv-entry" key={i}>
               <strong>{pr.title || "Project"}</strong>
               {pr.description && <p className="cv-text">{pr.description}</p>}
-              {pr.url && <a className="cv-link" href={pr.url}>{pr.url}</a>}
+              {pr.url && sanitizeUrl(pr.url) && (
+                <a className="cv-link" href={sanitizeUrl(pr.url)} target="_blank" rel="noopener noreferrer">
+                  {sanitizeUrl(pr.url)}
+                </a>
+              )}
             </div>
           ))}
         </SheetSection>
@@ -155,7 +160,11 @@ function ModernSheet({ p }) {
                 <div className="cv-entry" key={i}>
                   <strong>{pr.title || "Project"}</strong>
                   {pr.description && <p className="cv-text">{pr.description}</p>}
-                  {pr.url && <a className="cv-link" href={pr.url}>{pr.url}</a>}
+                  {pr.url && sanitizeUrl(pr.url) && (
+                    <a className="cv-link" href={sanitizeUrl(pr.url)} target="_blank" rel="noopener noreferrer">
+                      {sanitizeUrl(pr.url)}
+                    </a>
+                  )}
                 </div>
               ))}
             </SheetSection>
@@ -209,8 +218,12 @@ function MinimalSheet({ p }) {
         <SheetSection title="Projects">
           {(p.projects || []).map((pr, i) => (
             <div className="cv-entry" key={i}>
-              <strong>{pr.title || "Project"}</strong>
-              {pr.url && <a className="cv-link" href={pr.url}>{pr.url}</a>}
+              {pr.title && <strong>{pr.title}</strong>}
+              {pr.url && sanitizeUrl(pr.url) && (
+                <a className="cv-link" href={sanitizeUrl(pr.url)} target="_blank" rel="noopener noreferrer">
+                  {sanitizeUrl(pr.url)}
+                </a>
+              )}
             </div>
           ))}
         </SheetSection>

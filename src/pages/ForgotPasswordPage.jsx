@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(true);
     try {
-      await updateUserPassword({ email: email.trim(), newPassword });
+      await updateUserPassword({ email: email.trim(), newPassword, token: verifiedToken });
       setStep("success");
     } catch (err) {
       setAuthError(err.message || "Failed to update password. Please try again.");

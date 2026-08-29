@@ -6,6 +6,7 @@ import { loadProfile, saveProfile, profilePercent } from "../lib/profile.js";
 import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import AvatarUploadModal from "../components/AvatarUploadModal.jsx";
+import { sanitizeUrl } from "../lib/security.js";
 
 function ActivityChart() {
   const w = 800;
@@ -476,9 +477,9 @@ export default function ProfilePage() {
                   <div className="profile-subcard__view">
                     <strong>{item.title || "Project title"}</strong>
                     {item.description && <p>{item.description}</p>}
-                    {item.url && (
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="view-job">
-                        {item.url}
+                    {item.url && sanitizeUrl(item.url) && (
+                      <a href={sanitizeUrl(item.url)} target="_blank" rel="noopener noreferrer" className="view-job">
+                        {sanitizeUrl(item.url)}
                       </a>
                     )}
                   </div>

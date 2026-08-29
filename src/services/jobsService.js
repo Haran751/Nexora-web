@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
 import { jdJobs } from "../lib/jobsData.js";
+import { sanitizeText } from "../lib/security.js";
 
 const LOCAL_JOBS_KEY = "nexora_local_jobs_v1";
 
@@ -99,25 +100,35 @@ export async function fetchJobById(id) {
 }
 
 export async function createJob(jobData, userId) {
+  const safeTitle = sanitizeText(jobData.title, 120);
+  const safeCompany = sanitizeText(jobData.company || "Your Company", 100);
+  const safeLocation = sanitizeText(jobData.location || "Jakarta", 80);
+  const safeSalary = sanitizeText(jobData.salary || "Negotiable", 50);
+  const safeDesc = sanitizeText(jobData.description || "", 5000);
+  const safeReqs = (Array.isArray(jobData.requirements)
+    ? jobData.requirements
+    : typeof jobData.requirements === "string"
+    ? jobData.requirements.split("\n")
+    : []
+  )
+    .map((r) => sanitizeText(r, 200))
+    .filter(Boolean);
+
   if (isSupabaseConfigured) {
     const payload = {
       employer_id: userId || null,
-      title: jobData.title,
-      company: jobData.company || "Your Company",
+      title: safeTitle,
+      company: safeCompany,
       company_logo: jobData.companyLogo || "",
-      location: jobData.location || "Jakarta",
+      location: safeLocation,
       work_mode: jobData.workMode || "Hybrid",
-      salary: jobData.salary || "Negotiable",
+      salary: safeSalary,
       type: jobData.type || "Full-time",
       industry: jobData.industry || "Technology",
       deadline: jobData.deadline || "",
       duration: jobData.duration || "Full-time",
-      description: jobData.description || "",
-      requirements: Array.isArray(jobData.requirements)
-        ? jobData.requirements
-        : typeof jobData.requirements === "string"
-        ? jobData.requirements.split("\n").map((r) => r.trim()).filter(Boolean)
-        : [],
+      description: safeDesc,
+      requirements: safeReqs,
       status: jobData.status || "Active",
     };
 

@@ -102,7 +102,7 @@ export default function LandingPage() {
               </CtaButton>
             </div>
             <div className="employer-banner__art">
-              <img src="/for-employer.png" alt="For Employers preview" />
+              <img src="/for-employer.png" alt="For Employers preview" width="251" height="175" loading="lazy" decoding="async" />
             </div>
           </div>
         </section>

@@ -128,13 +128,14 @@ drop policy if exists "Authenticated employers can insert jobs" on public.jobs;
 create policy "Authenticated employers can insert jobs"
   on public.jobs for insert
   to authenticated
-  with check (auth.uid() = employer_id or employer_id is null);
+  with check (auth.uid() = employer_id);
 
 drop policy if exists "Employers can update their own jobs" on public.jobs;
 create policy "Employers can update their own jobs"
   on public.jobs for update
   to authenticated
-  using (auth.uid() = employer_id);
+  using (auth.uid() = employer_id)
+  with check (auth.uid() = employer_id);
 
 drop policy if exists "Employers can delete their own jobs" on public.jobs;
 create policy "Employers can delete their own jobs"
@@ -159,13 +160,12 @@ create policy "Workers can apply to jobs"
   with check (auth.uid() = applicant_id);
 
 drop policy if exists "Employers or applicants can update application" on public.applications;
-create policy "Employers or applicants can update application"
+drop policy if exists "Employers can update application status" on public.applications;
+create policy "Employers can update application status"
   on public.applications for update
   to authenticated
-  using (
-    auth.uid() = applicant_id
-    or auth.uid() in (select employer_id from public.jobs where id = applications.job_id)
-  );
+  using (auth.uid() in (select employer_id from public.jobs where id = applications.job_id))
+  with check (auth.uid() in (select employer_id from public.jobs where id = applications.job_id));
 
 -- Saved Jobs
 drop policy if exists "Users can view their own saved jobs" on public.saved_jobs;
@@ -305,7 +305,10 @@ begin
 end;
 $$;
 
-grant execute on function public.reset_password_by_email(text, text) to anon, authenticated, service_role;
+-- Keamanan: Hanya service_role yang berhak memanggil fungsi ini dari backend server.
+-- Dilarang keras memberikan akses ke anon atau authenticated untuk mencegah Account Takeover.
+revoke execute on function public.reset_password_by_email(text, text) from public, anon, authenticated;
+grant execute on function public.reset_password_by_email(text, text) to service_role;
 
 -- ============================================================
 -- AUTO-CONFIRM ALL NEW USERS (SUPABASE EMAIL CONFIRMATION BYPASS)
