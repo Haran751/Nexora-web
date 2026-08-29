@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import NotificationPanel from "./NotificationPanel.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -29,12 +29,34 @@ export default function Navbar({ variant = "app", onEmployerView }) {
   const [scrolled, setScrolled] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) closeMenu();
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") closeMenu();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     let active = true;
@@ -92,9 +114,6 @@ export default function Navbar({ variant = "app", onEmployerView }) {
         </>
       ) : (
         <>
-          <NavLink to="/signup" className="navbar__link">
-            For Employers
-          </NavLink>
           <NavLink to="/login" className="navbar__link">
             Login
           </NavLink>
@@ -138,6 +157,129 @@ export default function Navbar({ variant = "app", onEmployerView }) {
 
       <div className="navbar__links-wrap">
         <nav className="navbar__links">{centerLinks}</nav>
+      </div>
+
+      <button
+        className={`navbar__burger${menuOpen ? " navbar__burger--open" : ""}`}
+        aria-label="Menu"
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((o) => !o)}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
+      <div className={`navbar__drawer${menuOpen ? " navbar__drawer--open" : ""}`} ref={menuRef}>
+        <button
+          className="navbar__drawer-close"
+          aria-label="Close menu"
+          onClick={closeMenu}
+        >
+          ✕
+        </button>
+        {user && (
+          <Link to="/profile" className="navbar__drawer-user" onClick={closeMenu}>
+            <span className="navbar__avatar">
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={displayName} className="navbar__avatar-img" />
+              ) : (
+                avatarChar
+              )}
+            </span>
+            <strong>{displayName}</strong>
+          </Link>
+        )}
+        <nav className="navbar__drawer-links">
+          {user ? (
+            role === "employer" ? (
+              <>
+                <button
+                  onClick={() => {
+                    closeMenu();
+                    navigate("/employer");
+                  }}
+                  className="navbar__drawer-link navbar__drawer-link--accent"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => {
+                    closeMenu();
+                    navigate("/employer");
+                  }}
+                  className="navbar__drawer-link"
+                >
+                  My Jobs
+                </button>
+                <button
+                  onClick={() => {
+                    closeMenu();
+                    navigate("/employer");
+                  }}
+                  className="navbar__drawer-link"
+                >
+                  Candidates
+                </button>
+                <NavLink to="/jobs" className="navbar__drawer-link" onClick={closeMenu}>
+                  Browse Jobs
+                </NavLink>
+                <button
+                  onClick={() => {
+                    closeMenu();
+                    handleLogout();
+                  }}
+                  className="navbar__drawer-link navbar__drawer-link--exit"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/jobs" className="navbar__drawer-link" onClick={closeMenu}>
+                  Jobs
+                </NavLink>
+                <NavLink to="/applications" className="navbar__drawer-link" onClick={closeMenu}>
+                  Applications
+                </NavLink>
+                <NavLink to="/saved" className="navbar__drawer-link" onClick={closeMenu}>
+                  Saved ({savedCount})
+                </NavLink>
+                <NavLink
+                  to="/home"
+                  className="navbar__drawer-link navbar__drawer-link--accent"
+                  onClick={closeMenu}
+                >
+                  Dashboard
+                </NavLink>
+                <button
+                  onClick={() => {
+                    closeMenu();
+                    handleLogout();
+                  }}
+                  className="navbar__drawer-link navbar__drawer-link--exit"
+                >
+                  Log Out
+                </button>
+              </>
+            )
+          ) : (
+            <>
+              <NavLink to="/jobs" className="navbar__drawer-link" onClick={closeMenu}>
+                Find Jobs
+              </NavLink>
+              <NavLink to="/signup" className="navbar__drawer-link" onClick={closeMenu}>
+                For Employers
+              </NavLink>
+              <Link to="/login" className="cta-btn cta-btn--orange navbar__drawer-cta" onClick={closeMenu}>
+                Login
+              </Link>
+              <Link to="/signup" className="cta-btn cta-btn--pink navbar__drawer-cta" onClick={closeMenu}>
+                Sign Up
+              </Link>
+            </>
+          )}
+        </nav>
       </div>
 
       {(variant !== "landing" || user) && (

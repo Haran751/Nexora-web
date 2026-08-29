@@ -5,6 +5,19 @@ import HeroArt from "../components/HeroArt.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" strokeLinecap="round" />
+  </svg>
+);
+
+const previewJobs = [
+  { match: "96%", title: "Frontend Developer Intern", company: "Nexora Studio", tags: ["Jakarta", "Hybrid"] },
+  { match: "88%", title: "UI/UX Designer Grad", company: "Brightmind Agency", tags: ["Bandung", "On-site"] },
+  { match: "74%", title: "Data Analyst (Entry)", company: "CloudNine Analytics", tags: ["Remote"] },
+];
+
 export default function LandingPage() {
   const { user, role } = useAuth();
   const revealRef = useScrollReveal();
@@ -74,71 +87,78 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* Logo Nexora di kanan */}
           <div className="opportunity__aside">
-            <div className="feature-pill">
-              <strong>Personalized Match Score</strong>
-              <p>See how closely your skills match every role before applying.</p>
-            </div>
-            <div className="feature-pill">
-              <strong>Application Status Tracker</strong>
-              <p>Track every step from submission to interview in one place.</p>
-            </div>
-            <div className="feature-pill">
-              <strong>Built-In CV Builder</strong>
-              <p>Generate a clean, print-ready resume from your profile in seconds.</p>
+            <div className="opportunity__art">
+              <HeroArt width={767} height={633} />
             </div>
           </div>
         </section>
 
-        {/* For Employers */}
-        <section className="employer-banner scroll-reveal" data-delay="120">
-          <div className="employer-banner__body">
-            <div>
-              <span className="employer-banner__tag">FOR EMPLOYERS</span>
-              <h2>Find Great Talent, Faster.</h2>
-              <p>Post vacancies, filter candidate matches, and manage applications in a streamlined dashboard.</p>
-              <CtaButton to={user ? (role === "employer" ? "/employer" : "/home") : "/signup"} variant="dark">
-                {user && role === "employer" ? "Go to Employer Hub →" : "Start Hiring →"}
-              </CtaButton>
+        {/* Find Jobs That Fit You */}
+        <section className="fit scroll-reveal" data-delay="120">
+          {/* Mini preview Job Discovery (lebih kecil dari ukuran normal) di atas */}
+          <div className="fit__preview">
+            <div className="fit__preview-bar">
+              <span className="fit__preview-search">
+                <SearchIcon />
+              </span>
+              <span className="fit__preview-hint">Search jobs, companies, keywords…</span>
             </div>
-            <div className="employer-banner__art">
-              <img src="/for-employer.png" alt="For Employers preview" width="251" height="175" loading="lazy" decoding="async" />
+
+            <div className="fit__preview-list">
+              {previewJobs.map((job, i) => (
+                <div className="fit__preview-job" key={i}>
+                  <div className="fit__preview-job__top">
+                    <span className="fit__preview-match">{job.match}</span>
+                    <div>
+                      <strong className="fit__preview-title">{job.title}</strong>
+                      <span className="fit__preview-company">{job.company}</span>
+                    </div>
+                  </div>
+                  <div className="fit__preview-tags">
+                    {job.tags.map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </section>
 
-        {/* How It Works */}
-        <section className="how-it-works scroll-reveal" data-delay="160">
-          <div className="how-it-works__card">
-            <h2>How It Works</h2>
-            <div className="how-it-works__content">
-              <ol className="how-steps">
-                <li className="how-step">
-                  <span className="how-step__num">1</span>
-                  <div>
-                    <strong>Create Your Profile</strong>
-                    <span>Add your skills, education, and preferences to build your match profile.</span>
-                  </div>
-                </li>
-                <li className="how-step">
-                  <span className="how-step__num">2</span>
-                  <div>
-                    <strong>Get Matched</strong>
-                    <span>We match you with opportunities that truly fit.</span>
-                  </div>
-                </li>
-                <li className="how-step">
-                  <span className="how-step__num">3</span>
-                  <div>
-                    <strong>Easy Apply</strong>
-                    <span>Apply in just a few clicks, right from your dashboard.</span>
-                  </div>
-                </li>
-              </ol>
-              <CtaButton to={user ? dashboardLink : "/signup"} variant="pink">
-                {user ? "Open Dashboard →" : "Join Now"}
-              </CtaButton>
-            </div>
+          {/* How It Works di bawah + Join Now */}
+          <div className="how-card">
+            <span className="employer-banner__tag">FOR EMPLOYERS</span>
+            <h2>Find Jobs That Fit You</h2>
+            <p className="fit__sub">How it works</p>
+
+            <ol className="how-card__steps">
+              <li className="how-step">
+                <span className="how-step__num">1</span>
+                <div>
+                  <strong>Create Your Profile</strong>
+                  <span>Add your skills, education, and preferences to build your match profile.</span>
+                </div>
+              </li>
+              <li className="how-step">
+                <span className="how-step__num">2</span>
+                <div>
+                  <strong>Get Matched</strong>
+                  <span>We match you with opportunities that truly fit.</span>
+                </div>
+              </li>
+              <li className="how-step">
+                <span className="how-step__num">3</span>
+                <div>
+                  <strong>Easy Apply</strong>
+                  <span>Apply in just a few clicks, right from your dashboard.</span>
+                </div>
+              </li>
+            </ol>
+
+            <CtaButton to={user ? dashboardLink : "/signup"} variant="pink">
+              {user ? "Open Dashboard →" : "Join Now"}
+            </CtaButton>
           </div>
         </section>
       </main>

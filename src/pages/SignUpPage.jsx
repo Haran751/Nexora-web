@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import HeroArt from "../components/HeroArt.jsx";
 import OtpInput from "../components/OtpInput.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -12,6 +12,7 @@ const Magnifier = () => (
 );
 
 export default function SignUpPage() {
+  const navigate = useNavigate();
   const { signUp, verifyOtp, resendOtp } = useAuth();
   const [stage, setStage] = useState("role"); // 'role' | 'worker' | 'employer' | 'otp-worker' | 'otp-employer' | 'done-worker' | 'done-employer'
 
@@ -115,6 +116,16 @@ export default function SignUpPage() {
 
   return (
     <div className="signup">
+      <div className="signup__topbar">
+        <button className="signup__back" onClick={() => navigate(-1)} aria-label="Go back">
+          <span aria-hidden="true">←</span> Back
+        </button>
+        <Link to="/" className="signup__brand">
+          <img src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" loading="lazy" decoding="async" />
+          Nexora
+        </Link>
+      </div>
+
       <HeroArt width={767} height={633} className="signup__art-bg" />
       <h1 className="signup__title">Get Started with Nexora</h1>
       <p className="signup__sub">Choose how you want to join the Nexora community.</p>

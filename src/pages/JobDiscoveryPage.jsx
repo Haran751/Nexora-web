@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import HeroArt from "../components/HeroArt.jsx";
@@ -29,6 +29,13 @@ const MapPin = () => (
   </svg>
 );
 
+const shortDescription = (job) => {
+  const text =
+    job.description ||
+    `${job.title} at ${job.company} — an opening in ${job.industry || "your field"}.`;
+  return text.length > 130 ? text.slice(0, 130).replace(/\s+\S*$/, "") + "…" : text;
+};
+
 const parseSalary = (s) => {
   const match = String(s).match(/[\d.]+/);
   if (!match) return 0;
@@ -50,7 +57,8 @@ const durationOptions = ["Any", "3 months", "4 months", "6 months", "Full-time",
 const deadlineOptions = ["Any", "Soon (≤ 7 days)", "Within a month", "Flexible"];
 
 export default function JobDiscoveryPage() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, role } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -102,6 +110,20 @@ export default function JobDiscoveryPage() {
     });
   };
 
+  const clearFilters = () => {
+    setQuery("");
+    setSearch("");
+    setCheckedTypes(new Set());
+    setCheckedModes(new Set());
+    setCheckedIndustries(new Set());
+    setSalaryMax(2000);
+    setDuration("Any");
+    setDeadline("Any");
+  };
+
+  const activeFilterCount =
+    checkedTypes.size + checkedModes.size + checkedIndustries.size + (duration !== "Any" ? 1 : 0) + (deadline !== "Any" ? 1 : 0) + (query ? 1 : 0);
+
   const visible = useMemo(() => {
     return jobs.filter((job) => {
       if (query && !(job.title + " " + job.company).toLowerCase().includes(query.toLowerCase())) return false;
@@ -122,8 +144,15 @@ export default function JobDiscoveryPage() {
 
   return (
     <div className="page">
-      <Navbar />
+      {user && (
+        <Navbar variant={role === "employer" ? "employer" : "app"} onEmployerView={() => navigate("/employer")} />
+      )}
       <main className="page__body" ref={revealRef}>
+        <div className="jd-backbar">
+          <button className="signup__back" onClick={() => navigate(-1)} aria-label="Go back">
+            <span aria-hidden="true">←</span> Back
+          </button>
+        </div>
         <div className="jd-hero">
           <div>
             <h2>Find Your Next Opportunity</h2>
@@ -139,6 +168,25 @@ export default function JobDiscoveryPage() {
                 }}
               />
             </div>
+
+            <div className="jd-hero__stats">
+              <div className="jd-stat">
+                <b>{loading ? "…" : jobs.length}</b>
+                <span>Live roles</span>
+              </div>
+              <div className="jd-stat">
+                <b>{loading ? "…" : visible.length}</b>
+                <span>Matches</span>
+              </div>
+              <div className="jd-stat">
+                <b>85+</b>
+                <span>Companies</span>
+              </div>
+              <div className="jd-stat">
+                <b>24/7</b>
+                <span>Apply anytime</span>
+              </div>
+            </div>
           </div>
           <div className="jd-hero__art">
             <HeroArt width={767} height={633} />
@@ -148,6 +196,15 @@ export default function JobDiscoveryPage() {
         <div className="jd-layout">
           {/* Filters */}
           <aside className="jd-filters">
+            <div className="jd-filters__head">
+              <strong>Filters</strong>
+              {activeFilterCount > 0 && (
+                <button className="jd-filters__clear" onClick={clearFilters} title="Clear all filters">
+                  Clear all ({activeFilterCount})
+                </button>
+              )}
+            </div>
+
             <div className="filter-group">
               <h4>Job Type</h4>
               {typeOptions.map((opt) => (
@@ -250,7 +307,10 @@ export default function JobDiscoveryPage() {
           {/* Job list */}
           <div>
             <div className="jd-header">
-              <strong>{loading ? "Loading vacancies..." : `${visible.length} Jobs Found`}</strong>
+              <div>
+                <strong>{loading ? "Loading vacancies..." : `${visible.length} Jobs Found`}</strong>
+                {query && <span className="jd-header__query">for “{query}”</span>}
+              </div>
               <span>Sorted by best match</span>
             </div>
             <div className="job-list">
@@ -261,6 +321,9 @@ export default function JobDiscoveryPage() {
                     <div className="job-card__match">
                       <b>{job.match || 90}%</b>
                       <span>Match</span>
+                      <div className="match-mini-track">
+                        <div className="match-mini-track__fill" style={{ width: `${job.match || 90}%` }} />
+                      </div>
                     </div>
                     <div className="job-card__body">
                       <button
@@ -271,8 +334,12 @@ export default function JobDiscoveryPage() {
                       >
                         <BookmarkIcon />
                       </button>
+
                       <h3 className="job-card__title">{job.title}</h3>
                       <p className="job-card__company">{job.company}</p>
+
+                      <p className="job-card__desc">{shortDescription(job)}</p>
+
                       <div className="job-tags">
                         {tags.map((tag) => (
                           <span className="job-tag" key={tag}>
@@ -280,8 +347,8 @@ export default function JobDiscoveryPage() {
                           </span>
                         ))}
                       </div>
-                      <Link to={`/jobs/${job.id}`} className="view-job">
-                        [ View Job ]
+                      <Link to={`/jobs/${job.id}`} className="view-job view-job--btn">
+                        View Job
                       </Link>
                     </div>
                   </article>

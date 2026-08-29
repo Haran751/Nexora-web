@@ -57,6 +57,20 @@ function ProtectedEmployerRoute({ children }) {
   return children;
 }
 
+// Melindungi halaman milik job-seeker/user: harus login dulu.
+function RequireAuth({ allowEmployer = false, children }) {
+  const { user, role, loading } = useAuth();
+  if (loading) return null;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  // Halaman job-seeker (profil, lamaran, dll.) tidak utk employer.
+  if (!allowEmployer && role === "employer") {
+    return <Navigate to="/employer" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <HashRouter>
@@ -64,16 +78,58 @@ export default function App() {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/home" element={<HomePage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/jobs" element={<JobDiscoveryPage />} />
-            <Route path="/jobs/:id" element={<JobDetailPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/cv" element={<CVGeneratorPage />} />
-            <Route path="/saved" element={<SavedJobsPage />} />
-            <Route path="/applications" element={<ApplicationsPage />} />
+            <Route
+              path="/jobs/:id"
+              element={
+                <RequireAuth>
+                  <JobDetailPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/home"
+              element={
+                <RequireAuth allowEmployer>
+                  <HomePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <ProfilePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/cv"
+              element={
+                <RequireAuth>
+                  <CVGeneratorPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/saved"
+              element={
+                <RequireAuth>
+                  <SavedJobsPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/applications"
+              element={
+                <RequireAuth>
+                  <ApplicationsPage />
+                </RequireAuth>
+              }
+            />
             <Route
               path="/employer"
               element={
