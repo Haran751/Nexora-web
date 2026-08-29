@@ -19,7 +19,7 @@ export default function LoginPage() {
     setErrors(errs);
     if (Object.keys(errs).length === 0) {
       setSubmitting(true);
-      setTimeout(() => navigate("/"), 700);
+      setTimeout(() => navigate("/home"), 700);
     }
   }
 

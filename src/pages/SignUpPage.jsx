@@ -171,7 +171,7 @@ export default function SignUpPage() {
               ? "Your worker account was created successfully."
               : "Your employer account was created successfully."}
           </p>
-          <Link to="/" className="cta-btn cta-btn--orange" style={{ marginTop: 10 }}>
+          <Link to="/home" className="cta-btn cta-btn--orange" style={{ marginTop: 10 }}>
             <span className="cta-btn__play" /> Go to Dashboard
           </Link>
         </div>
