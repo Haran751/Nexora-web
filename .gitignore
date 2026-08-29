@@ -33,3 +33,6 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
+
+# Temporary Error Logs
+eror.md

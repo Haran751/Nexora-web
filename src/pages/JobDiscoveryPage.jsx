@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import HeroArt from "../components/HeroArt.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
-import { jdJobs, daysLeft } from "../lib/jobsData.js";
-import { loadSavedJobs, saveSavedJobs, toggleSavedJob } from "../lib/savedJobs.js";
+import { daysLeft } from "../lib/jobsData.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { fetchJobs } from "../services/jobsService.js";
+import { fetchSavedJobIds, toggleSavedJobId } from "../services/savedJobsService.js";
 
 const SearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -39,6 +41,7 @@ const typeOptions = [
   { label: "Entry Level" },
   { label: "Part-Time" },
   { label: "Freelance" },
+  { label: "Full-time" },
 ];
 
 const modeOptions = ["Remote", "Hybrid", "On-site"];
@@ -47,22 +50,47 @@ const durationOptions = ["Any", "3 months", "4 months", "6 months", "Full-time",
 const deadlineOptions = ["Any", "Soon (≤ 7 days)", "Within a month", "Flexible"];
 
 export default function JobDiscoveryPage() {
+  const { user } = useAuth();
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
-  const [bookmarked, setBookmarked] = useState(loadSavedJobs);
+  const [bookmarked, setBookmarked] = useState(() => new Set());
   const [checkedTypes, setCheckedTypes] = useState(() => new Set());
   const [checkedModes, setCheckedModes] = useState(() => new Set());
   const [checkedIndustries, setCheckedIndustries] = useState(() => new Set());
-  const [salaryMax, setSalaryMax] = useState(1500);
+  const [salaryMax, setSalaryMax] = useState(2000);
   const [duration, setDuration] = useState("Any");
   const [deadline, setDeadline] = useState("Any");
 
-  const toggleBookmark = (id) => {
-    setBookmarked((prev) => {
-      const next = toggleSavedJob(prev, id);
-      saveSavedJobs(next);
-      return next;
-    });
+  useEffect(() => {
+    let active = true;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const [jobsList, savedSet] = await Promise.all([
+          fetchJobs({ status: "Active" }),
+          fetchSavedJobIds(user?.id),
+        ]);
+        if (active) {
+          setJobs(jobsList);
+          setBookmarked(savedSet);
+        }
+      } catch (err) {
+        console.error("Failed to load discovery data:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  const toggleBookmark = async (id) => {
+    const next = await toggleSavedJobId(user?.id, id, bookmarked);
+    setBookmarked(new Set(next));
   };
 
   const toggleSet = (setter, value) => {
@@ -75,8 +103,8 @@ export default function JobDiscoveryPage() {
   };
 
   const visible = useMemo(() => {
-    return jdJobs.filter((job) => {
-      if (query && !(job.title + job.company).toLowerCase().includes(query.toLowerCase())) return false;
+    return jobs.filter((job) => {
+      if (query && !(job.title + " " + job.company).toLowerCase().includes(query.toLowerCase())) return false;
       if (checkedTypes.size > 0 && !checkedTypes.has(job.type)) return false;
       if (checkedModes.size > 0 && !checkedModes.has(job.workMode)) return false;
       if (checkedIndustries.size > 0 && !checkedIndustries.has(job.industry)) return false;
@@ -88,7 +116,7 @@ export default function JobDiscoveryPage() {
       if (deadline === "Flexible" && left < 30) return false;
       return true;
     });
-  }, [query, checkedTypes, checkedModes, checkedIndustries, salaryMax, duration, deadline]);
+  }, [jobs, query, checkedTypes, checkedModes, checkedIndustries, salaryMax, duration, deadline]);
 
   const revealRef = useScrollReveal([visible]);
 
@@ -154,7 +182,7 @@ export default function JobDiscoveryPage() {
                 <input
                   type="range"
                   min="300"
-                  max="2000"
+                  max="2500"
                   step="50"
                   value={salaryMax}
                   onChange={(e) => setSalaryMax(Number(e.target.value))}
@@ -222,41 +250,44 @@ export default function JobDiscoveryPage() {
           {/* Job list */}
           <div>
             <div className="jd-header">
-              <strong>{visible.length} Jobs Found</strong>
+              <strong>{loading ? "Loading vacancies..." : `${visible.length} Jobs Found`}</strong>
               <span>Sorted by best match</span>
             </div>
             <div className="job-list">
-              {visible.map((job) => (
-                <article className="job-card scroll-reveal" key={job.id} data-delay="40">
-                  <div className="job-card__match">
-                    <b>{job.match}%</b>
-                    <span>Match</span>
-                  </div>
-                  <div className="job-card__body">
-                    <button
-                      className="job-card__bookmark"
-                      aria-label="Save job"
-                      onClick={() => toggleBookmark(job.id)}
-                      style={{ color: bookmarked.has(String(job.id)) ? "var(--accent-orange)" : "rgba(232,136,60,.7)" }}
-                    >
-                      <BookmarkIcon />
-                    </button>
-                    <h3 className="job-card__title">{job.title}</h3>
-                    <p className="job-card__company">{job.company}</p>
-                    <div className="job-tags">
-                      {job.tags.map((tag) => (
-                        <span className="job-tag" key={tag}>
-                          {tag}
-                        </span>
-                      ))}
+              {visible.map((job) => {
+                const tags = job.tags || [job.location, job.workMode, job.salary, job.posted];
+                return (
+                  <article className="job-card scroll-reveal" key={job.id} data-delay="40">
+                    <div className="job-card__match">
+                      <b>{job.match || 90}%</b>
+                      <span>Match</span>
                     </div>
-                    <Link to={`/jobs/${job.id}`} className="view-job">
-                      [ View Job ]
-                    </Link>
-                  </div>
-                </article>
-              ))}
-              {visible.length === 0 && (
+                    <div className="job-card__body">
+                      <button
+                        className="job-card__bookmark"
+                        aria-label="Save job"
+                        onClick={() => toggleBookmark(job.id)}
+                        style={{ color: bookmarked.has(String(job.id)) ? "var(--accent-orange)" : "rgba(232,136,60,.7)" }}
+                      >
+                        <BookmarkIcon />
+                      </button>
+                      <h3 className="job-card__title">{job.title}</h3>
+                      <p className="job-card__company">{job.company}</p>
+                      <div className="job-tags">
+                        {tags.map((tag) => (
+                          <span className="job-tag" key={tag}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <Link to={`/jobs/${job.id}`} className="view-job">
+                        [ View Job ]
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+              {!loading && visible.length === 0 && (
                 <div className="card card--alt" style={{ textAlign: "center" }}>
                   <h3>No jobs found</h3>
                   <p style={{ color: "rgba(255,255,255,.8)" }}>

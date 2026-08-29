@@ -1,25 +1,42 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import HeroArt from "../components/HeroArt.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   const validateEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setAuthError("");
     const errs = {};
     if (!form.email.trim()) errs.email = "Email is required.";
     else if (!validateEmail(form.email)) errs.email = "Enter a valid email.";
     if (!form.password) errs.password = "Password is required.";
     setErrors(errs);
+
     if (Object.keys(errs).length === 0) {
       setSubmitting(true);
-      setTimeout(() => navigate("/home"), 700);
+      try {
+        const res = await signIn({ email: form.email, password: form.password });
+        const userRole = res?.user?.user_metadata?.role || "worker";
+        if (userRole === "employer") {
+          navigate("/employer");
+        } else {
+          navigate("/home");
+        }
+      } catch (err) {
+        setAuthError(err.message || "Failed to log in. Please check your credentials.");
+      } finally {
+        setSubmitting(false);
+      }
     }
   }
 
@@ -30,6 +47,22 @@ export default function LoginPage() {
       <p className="signup__sub">Log in to your Nexora account</p>
 
       <form className="signup-form signup-form--worker" onSubmit={handleSubmit} noValidate>
+        {authError && (
+          <div
+            style={{
+              padding: "10px 14px",
+              background: "rgba(220, 53, 69, 0.2)",
+              border: "1px solid rgba(220, 53, 69, 0.4)",
+              borderRadius: "8px",
+              color: "#ff8b94",
+              fontSize: "0.88rem",
+              marginBottom: "12px",
+            }}
+          >
+            {authError}
+          </div>
+        )}
+
         <div className="field">
           <label htmlFor="li-email">Email</label>
           <input
@@ -43,7 +76,12 @@ export default function LoginPage() {
         </div>
 
         <div className="field">
-          <label htmlFor="li-pass">Password</label>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <label htmlFor="li-pass" style={{ margin: 0 }}>Password</label>
+            <Link to="/forgot-password" style={{ fontSize: "12.5px", color: "inherit", opacity: 0.85, textDecoration: "underline" }}>
+              Forgot password?
+            </Link>
+          </div>
           <input
             id="li-pass"
             type="password"

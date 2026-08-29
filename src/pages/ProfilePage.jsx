@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import { loadProfile, saveProfile, profilePercent } from "../lib/profile.js";
 import useScrollReveal from "../hooks/useScrollReveal.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import AvatarUploadModal from "../components/AvatarUploadModal.jsx";
 
 function ActivityChart() {
   const w = 800;
@@ -133,18 +135,56 @@ function InfoField({ label, value, edit }) {
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(loadProfile);
+  const { user, profile: authProfile, updateProfile } = useAuth();
+  const [profile, setProfile] = useState(() => authProfile || loadProfile());
   const [editing, setEditing] = useState({});
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const revealRef = useScrollReveal();
+  const isUserEditRef = useRef(false);
 
+  // Sync from authProfile if it changes externally (e.g. initial fetch from Supabase)
   useEffect(() => {
+    if (authProfile && !isUserEditRef.current) {
+      setProfile((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(authProfile)) {
+          return prev;
+        }
+        return authProfile;
+      });
+    }
+  }, [authProfile]);
+
+  // Sync to localStorage and updateProfile only when modified by the user
+  useEffect(() => {
+    if (!isUserEditRef.current) return;
+
     saveProfile(profile);
-  }, [profile]);
 
-  const set = (patch) => setProfile((p) => ({ ...p, ...patch }));
-  const toggleEdit = (key) => setEditing((e) => ({ ...e, [key]: !e[key] }));
+    const timer = setTimeout(() => {
+      updateProfile(profile).catch((err) => console.warn("Profile sync error:", err));
+      isUserEditRef.current = false;
+    }, 400);
 
-  const addItem = (key) =>
+    return () => clearTimeout(timer);
+  }, [profile, updateProfile]);
+
+  const set = (patch) => {
+    isUserEditRef.current = true;
+    setProfile((p) => ({ ...p, ...patch }));
+  };
+
+  const toggleEdit = (key) => {
+    if (editing[key]) {
+      // Selesai edit bagian ini, langsung simpan
+      saveProfile(profile);
+      updateProfile(profile).catch((err) => console.warn("Profile sync error:", err));
+      isUserEditRef.current = false;
+    }
+    setEditing((e) => ({ ...e, [key]: !e[key] }));
+  };
+
+  const addItem = (key) => {
+    isUserEditRef.current = true;
     setProfile((p) => {
       const template =
         key === "education"
@@ -156,20 +196,31 @@ export default function ProfilePage() {
           : { title: "", issuer: "", year: "" };
       return { ...p, [key]: [...(p[key] || []), template] };
     });
+  };
 
-  const updateItem = (key, idx, patch) =>
+  const updateItem = (key, idx, patch) => {
+    isUserEditRef.current = true;
     setProfile((p) => ({
       ...p,
-      [key]: p[key].map((item, i) => (i === idx ? { ...item, ...patch } : item)),
+      [key]: (p[key] || []).map((item, i) => (i === idx ? { ...item, ...patch } : item)),
     }));
+  };
 
-  const removeItem = (key, idx) =>
-    setProfile((p) => ({ ...p, [key]: p[key].filter((_, i) => i !== idx) }));
+  const removeItem = (key, idx) => {
+    isUserEditRef.current = true;
+    setProfile((p) => ({ ...p, [key]: (p[key] || []).filter((_, i) => i !== idx) }));
+  };
 
   const addSkill = (skill) => {
     const s = skill.trim();
     if (!s) return;
-    setProfile((p) => ({ ...p, skills: p.skills.includes(s) ? p.skills : [...p.skills, s] }));
+    isUserEditRef.current = true;
+    setProfile((p) => ({ ...p, skills: (p.skills || []).includes(s) ? p.skills : [...(p.skills || []), s] }));
+  };
+
+  const removeSkill = (idx) => {
+    isUserEditRef.current = true;
+    setProfile((p) => ({ ...p, skills: (p.skills || []).filter((_, i) => i !== idx) }));
   };
 
   const percent = profilePercent(profile);
@@ -195,8 +246,44 @@ export default function ProfilePage() {
         </div>
 
         <div className="profile__top">
-          <div className="profile__avatar">
-            <UserIcon />
+          <div className="profile__avatar-container">
+            <div
+              className="profile__avatar"
+              onClick={() => setIsAvatarModalOpen(true)}
+              role="button"
+              tabIndex={0}
+              title="Klik untuk mengganti foto profil"
+              onKeyDown={(e) => e.key === "Enter" && setIsAvatarModalOpen(true)}
+            >
+              {profile.avatarUrl ? (
+                <img
+                  src={profile.avatarUrl}
+                  alt={profileName}
+                  className="profile__avatar-img"
+                />
+              ) : (
+                <UserIcon />
+              )}
+              <button
+                type="button"
+                className="profile__avatar-badge"
+                title="Ubah Foto"
+                aria-label="Ubah Foto"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAvatarModalOpen(true);
+                }}
+              >
+                📷
+              </button>
+            </div>
+            <button
+              type="button"
+              className="profile__avatar-change-link"
+              onClick={() => setIsAvatarModalOpen(true)}
+            >
+              {profile.avatarUrl ? "Ubah Foto Profil" : "+ Pasang Foto Profil"}
+            </button>
           </div>
           <div className="profile__meta">
             <div className="profile__meta-label">birthday / place of birth</div>
@@ -212,23 +299,23 @@ export default function ProfilePage() {
               <div className="profile-fields">
                 <div className="profile-input">
                   <label>Name</label>
-                  <input value={profile.name} onChange={(e) => set({ name: e.target.value })} />
+                  <input value={profile.name || ""} onChange={(e) => set({ name: e.target.value })} />
                 </div>
                 <div className="profile-input">
                   <label>Email</label>
-                  <input value={profile.email} onChange={(e) => set({ email: e.target.value })} />
+                  <input value={profile.email || ""} onChange={(e) => set({ email: e.target.value })} />
                 </div>
                 <div className="profile-input">
                   <label>Phone</label>
-                  <input value={profile.phone} onChange={(e) => set({ phone: e.target.value })} />
+                  <input value={profile.phone || ""} onChange={(e) => set({ phone: e.target.value })} />
                 </div>
                 <div className="profile-input">
                   <label>Birthday</label>
-                  <input value={profile.birthday} onChange={(e) => set({ birthday: e.target.value })} />
+                  <input value={profile.birthday || ""} onChange={(e) => set({ birthday: e.target.value })} />
                 </div>
                 <div className="profile-input">
                   <label>Location</label>
-                  <input value={profile.location} onChange={(e) => set({ location: e.target.value })} />
+                  <input value={profile.location || ""} onChange={(e) => set({ location: e.target.value })} />
                 </div>
               </div>
             ) : (
@@ -248,7 +335,7 @@ export default function ProfilePage() {
                 className="profile-textarea"
                 rows={5}
                 placeholder="Tell employers about yourself…"
-                value={profile.about}
+                value={profile.about || ""}
                 onChange={(e) => set({ about: e.target.value })}
               />
             ) : (
@@ -266,7 +353,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     aria-label={`Remove ${skill}`}
-                    onClick={() => setProfile((p) => ({ ...p, skills: p.skills.filter((_, i) => i !== idx) }))}
+                    onClick={() => removeSkill(idx)}
                   >
                     ×
                   </button>
@@ -289,15 +376,15 @@ export default function ProfilePage() {
                   <>
                     <div className="profile-input">
                       <label>Institution</label>
-                      <input value={item.institution} onChange={(e) => updateItem("education", idx, { institution: e.target.value })} />
+                      <input value={item.institution || ""} onChange={(e) => updateItem("education", idx, { institution: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Major</label>
-                      <input value={item.major} onChange={(e) => updateItem("education", idx, { major: e.target.value })} />
+                      <input value={item.major || ""} onChange={(e) => updateItem("education", idx, { major: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Year</label>
-                      <input value={item.year} onChange={(e) => updateItem("education", idx, { year: e.target.value })} />
+                      <input value={item.year || ""} onChange={(e) => updateItem("education", idx, { year: e.target.value })} />
                     </div>
                   </>
                 ) : (
@@ -329,19 +416,19 @@ export default function ProfilePage() {
                   <>
                     <div className="profile-input">
                       <label>Company</label>
-                      <input value={item.company} onChange={(e) => updateItem("experience", idx, { company: e.target.value })} />
+                      <input value={item.company || ""} onChange={(e) => updateItem("experience", idx, { company: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Role</label>
-                      <input value={item.role} onChange={(e) => updateItem("experience", idx, { role: e.target.value })} />
+                      <input value={item.role || ""} onChange={(e) => updateItem("experience", idx, { role: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Duration</label>
-                      <input value={item.duration} onChange={(e) => updateItem("experience", idx, { duration: e.target.value })} />
+                      <input value={item.duration || ""} onChange={(e) => updateItem("experience", idx, { duration: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Description</label>
-                      <textarea rows={2} value={item.description} onChange={(e) => updateItem("experience", idx, { description: e.target.value })} />
+                      <textarea rows={2} value={item.description || ""} onChange={(e) => updateItem("experience", idx, { description: e.target.value })} />
                     </div>
                   </>
                 ) : (
@@ -374,15 +461,15 @@ export default function ProfilePage() {
                   <>
                     <div className="profile-input">
                       <label>Title</label>
-                      <input value={item.title} onChange={(e) => updateItem("projects", idx, { title: e.target.value })} />
+                      <input value={item.title || ""} onChange={(e) => updateItem("projects", idx, { title: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Description</label>
-                      <textarea rows={2} value={item.description} onChange={(e) => updateItem("projects", idx, { description: e.target.value })} />
+                      <textarea rows={2} value={item.description || ""} onChange={(e) => updateItem("projects", idx, { description: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>URL</label>
-                      <input value={item.url} onChange={(e) => updateItem("projects", idx, { url: e.target.value })} />
+                      <input value={item.url || ""} onChange={(e) => updateItem("projects", idx, { url: e.target.value })} />
                     </div>
                   </>
                 ) : (
@@ -419,15 +506,15 @@ export default function ProfilePage() {
                   <>
                     <div className="profile-input">
                       <label>Title</label>
-                      <input value={item.title} onChange={(e) => updateItem("certificates", idx, { title: e.target.value })} />
+                      <input value={item.title || ""} onChange={(e) => updateItem("certificates", idx, { title: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Issuer</label>
-                      <input value={item.issuer} onChange={(e) => updateItem("certificates", idx, { issuer: e.target.value })} />
+                      <input value={item.issuer || ""} onChange={(e) => updateItem("certificates", idx, { issuer: e.target.value })} />
                     </div>
                     <div className="profile-input">
                       <label>Year</label>
-                      <input value={item.year} onChange={(e) => updateItem("certificates", idx, { year: e.target.value })} />
+                      <input value={item.year || ""} onChange={(e) => updateItem("certificates", idx, { year: e.target.value })} />
                     </div>
                   </>
                 ) : (
@@ -455,6 +542,16 @@ export default function ProfilePage() {
             <ActivityChart />
           </div>
         </div>
+
+        <AvatarUploadModal
+          isOpen={isAvatarModalOpen}
+          onClose={() => setIsAvatarModalOpen(false)}
+          currentAvatarUrl={profile.avatarUrl}
+          userName={profileName}
+          userId={user?.id || "user"}
+          onAvatarSaved={(newUrl) => set({ avatarUrl: newUrl })}
+          onAvatarDeleted={() => set({ avatarUrl: "" })}
+        />
       </main>
       <Footer />
     </div>

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import NotificationPanel from "./NotificationPanel.jsx";
-import { jdJobs } from "../lib/jobsData.js";
-import { loadSavedJobs } from "../lib/savedJobs.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { fetchSavedJobIds } from "../services/savedJobsService.js";
 
 const BellIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -24,8 +24,11 @@ const BellIcon = () => (
 const UNREAD_COUNT = 3;
 
 export default function Navbar({ variant = "app", onEmployerView }) {
+  const navigate = useNavigate();
+  const { user, profile, role, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -33,7 +36,22 @@ export default function Navbar({ variant = "app", onEmployerView }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const savedCount = jdJobs.filter((j) => loadSavedJobs().has(String(j.id))).length;
+  useEffect(() => {
+    let active = true;
+    async function loadSavedCount() {
+      const set = await fetchSavedJobIds(user?.id);
+      if (active) setSavedCount(set.size);
+    }
+    loadSavedCount();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   const appLinks = (
     <>
@@ -46,6 +64,11 @@ export default function Navbar({ variant = "app", onEmployerView }) {
       <NavLink to="/saved" className="navbar__link navbar__link--saved">
         Saved{savedCount > 0 && <span className="navbar__badge">{savedCount}</span>}
       </NavLink>
+      {role === "employer" && (
+        <NavLink to="/employer" className="navbar__link" style={{ color: "var(--accent-orange)" }}>
+          Employer Hub
+        </NavLink>
+      )}
     </>
   );
 
@@ -54,15 +77,32 @@ export default function Navbar({ variant = "app", onEmployerView }) {
       <NavLink to="/jobs" className="navbar__link">
         Find Jobs
       </NavLink>
-      <Link to="/welcome" className="navbar__link">
-        How it Works
-      </Link>
-      <NavLink to="/signup" className="navbar__link">
-        For Employers
-      </NavLink>
-      <NavLink to="/login" className="navbar__link">
-        Login
-      </NavLink>
+      {user ? (
+        <>
+          <NavLink to="/applications" className="navbar__link">
+            Applications
+          </NavLink>
+          <NavLink
+            to={role === "employer" ? "/employer" : "/home"}
+            className="navbar__link"
+            style={{ color: "var(--accent-orange)", fontWeight: 600 }}
+          >
+            Dashboard
+          </NavLink>
+        </>
+      ) : (
+        <>
+          <NavLink to="/signup" className="navbar__link">
+            For Employers
+          </NavLink>
+          <NavLink to="/login" className="navbar__link">
+            Login
+          </NavLink>
+          <NavLink to="/signup" className="navbar__link">
+            Sign Up
+          </NavLink>
+        </>
+      )}
     </>
   );
 
@@ -77,15 +117,21 @@ export default function Navbar({ variant = "app", onEmployerView }) {
           {v}
         </button>
       ))}
+      <NavLink to="/jobs" className="navbar__link" style={{ marginLeft: 12 }}>
+        Browse Jobs
+      </NavLink>
     </>
   );
 
   const centerLinks =
     variant === "landing" ? landingLinks : variant === "employer" ? employerLinks : appLinks;
 
+  const displayName = profile?.companyName || profile?.name || user?.email?.split("@")[0] || "User";
+  const avatarChar = (displayName || "U").trim().charAt(0).toUpperCase();
+
   return (
     <header className={`navbar${variant === "landing" ? " navbar--landing" : ""}${scrolled ? " navbar--scrolled" : ""}`}>
-      <Link to="/" className="navbar__brand">
+      <Link to={user ? (role === "employer" ? "/employer" : "/home") : "/"} className="navbar__brand">
         <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" />
         Nexora
       </Link>
@@ -94,7 +140,7 @@ export default function Navbar({ variant = "app", onEmployerView }) {
         <nav className="navbar__links">{centerLinks}</nav>
       </div>
 
-      {variant !== "landing" && (
+      {(variant !== "landing" || user) && (
         <div className="navbar__right">
           {variant !== "employer" && (
             <div className="navbar__bell-wrap">
@@ -110,15 +156,46 @@ export default function Navbar({ variant = "app", onEmployerView }) {
               <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
             </div>
           )}
+
           <div className="navbar__step">
             {Array.from({ length: 4 }).map((_, i) => (
               <i key={i} />
             ))}
           </div>
-          <Link to="/profile" className="navbar__user">
-            <span className="navbar__avatar">A</span>
-            User
-          </Link>
+
+          {user ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Link to="/profile" className="navbar__user">
+                <span className="navbar__avatar">
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt={displayName} className="navbar__avatar-img" />
+                  ) : (
+                    avatarChar
+                  )}
+                </span>
+                <span style={{ maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {displayName}
+                </span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="navbar__link navbar__link--btn"
+                title="Log Out"
+                style={{ opacity: 0.8, fontSize: "0.85rem", padding: "4px 8px" }}
+              >
+                Exit
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Link to="/login" className="navbar__link">
+                Login
+              </Link>
+              <Link to="/signup" className="cta-btn cta-btn--orange" style={{ padding: "6px 14px", fontSize: "0.85rem" }}>
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </header>

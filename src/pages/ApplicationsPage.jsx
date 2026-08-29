@@ -1,81 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
+import { getUserApplications } from "../services/applicationsService.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const STAGES = ["Applied", "Viewed", "In Review", "Shortlisted", "Interview"];
-
-const dummyApps = [
-  {
-    id: 1,
-    jobId: 1,
-    title: "Frontend Developer Intern",
-    company: "Nexora Studio",
-    applied: "Aug 25, 2026",
-    status: "In Review",
-    timeline: [
-      { label: "Application sent", date: "Aug 25, 2026" },
-      { label: "Application viewed", date: "Aug 26, 2026" },
-      { label: "In review by hiring team", date: "Aug 27, 2026" },
-    ],
-  },
-  {
-    id: 2,
-    jobId: 2,
-    title: "UI/UX Designer Grad",
-    company: "Brightmind Agency",
-    applied: "Aug 22, 2026",
-    status: "Interview",
-    timeline: [
-      { label: "Application sent", date: "Aug 22, 2026" },
-      { label: "Application viewed", date: "Aug 23, 2026" },
-      { label: "In review", date: "Aug 24, 2026" },
-      { label: "Interview scheduled", date: "Aug 28, 2026" },
-    ],
-  },
-  {
-    id: 3,
-    jobId: 3,
-    title: "Data Analyst (Entry)",
-    company: "CloudNine Analytics",
-    applied: "Aug 24, 2026",
-    status: "Applied",
-    timeline: [{ label: "Application sent", date: "Aug 24, 2026" }],
-  },
-  {
-    id: 4,
-    jobId: 4,
-    title: "Marketing Assistant",
-    company: "Vertex Retail",
-    applied: "Aug 20, 2026",
-    status: "Accepted",
-    timeline: [
-      { label: "Application sent", date: "Aug 20, 2026" },
-      { label: "Application viewed", date: "Aug 21, 2026" },
-      { label: "In review", date: "Aug 22, 2026" },
-      { label: "Shortlisted", date: "Aug 25, 2026" },
-      { label: "Offered & accepted 🎉", date: "Aug 28, 2026" },
-    ],
-  },
-  {
-    id: 5,
-    jobId: 9,
-    title: "HR Assistant (Part-Time)",
-    company: "Makmur Group",
-    applied: "Aug 18, 2026",
-    status: "Rejected",
-    timeline: [
-      { label: "Application sent", date: "Aug 18, 2026" },
-      { label: "Application viewed", date: "Aug 19, 2026" },
-      { label: "Application closed", date: "Aug 26, 2026" },
-    ],
-  },
-];
-
 const TABS = ["All", "Applied", "In Review", "Interview", "Accepted", "Rejected"];
 
-const statusClass = (status) => "app-badge--" + status.toLowerCase().replace(/\s+/g, "");
+const statusClass = (status) => "app-badge--" + (status || "").toLowerCase().replace(/\s+/g, "");
 
 function stageIndex(status) {
   if (status === "Accepted" || status === "Rejected") return STAGES.length;
@@ -83,12 +17,34 @@ function stageIndex(status) {
   return i >= 0 ? i : 0;
 }
 
-function ApplicationsPage() {
+export default function ApplicationsPage() {
+  const { user } = useAuth();
   const [tab, setTab] = useState("All");
   const [expandedId, setExpandedId] = useState(null);
-  const revealRef = useScrollReveal();
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const visible = tab === "All" ? dummyApps : dummyApps.filter((a) => a.status === tab);
+  useEffect(() => {
+    let active = true;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const data = await getUserApplications(user?.id);
+        if (active) setApplications(data);
+      } catch (err) {
+        console.error("getUserApplications error:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  const visible = tab === "All" ? applications : applications.filter((a) => a.status === tab);
+  const revealRef = useScrollReveal([visible]);
 
   return (
     <div className="page">
@@ -109,7 +65,11 @@ function ApplicationsPage() {
           ))}
         </div>
 
-        {visible.length > 0 ? (
+        {loading ? (
+          <div className="card card--alt" style={{ textAlign: "center", padding: 32 }}>
+            <p style={{ color: "rgba(255,255,255,.8)" }}>Loading applications...</p>
+          </div>
+        ) : visible.length > 0 ? (
           <div className="app-list">
             {visible.map((app) => {
               const reached = stageIndex(app.status);
@@ -120,7 +80,7 @@ function ApplicationsPage() {
                   onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
                 >
                   <div className="app-card__head">
-                    <span className="app-card__logo">{app.company.charAt(0)}</span>
+                    <span className="app-card__logo">{(app.company || "C").charAt(0)}</span>
                     <div className="app-card__info">
                       <h3>{app.title}</h3>
                       <span className="app-card__company">{app.company}</span>
@@ -145,14 +105,22 @@ function ApplicationsPage() {
                       </div>
                     ))}
                     <div className="app-stages__step">
-                      <span className={`app-stages__dot${app.status === "Accepted" ? " app-stages__dot--end" : app.status === "Rejected" ? " app-stages__dot--reject" : ""}`} />
+                      <span
+                        className={`app-stages__dot${
+                          app.status === "Accepted"
+                            ? " app-stages__dot--end"
+                            : app.status === "Rejected"
+                            ? " app-stages__dot--reject"
+                            : ""
+                        }`}
+                      />
                       <span className="app-stages__label">{app.status === "Rejected" ? "Closed" : "Result"}</span>
                     </div>
                   </div>
 
                   {expandedId === app.id && (
                     <div className="app-timeline">
-                      {app.timeline.map((item, i) => (
+                      {app.timeline?.map((item, i) => (
                         <div className="app-timeline__item" key={i}>
                           <span className="app-timeline__dot" />
                           <div>
@@ -186,5 +154,3 @@ function ApplicationsPage() {
     </div>
   );
 }
-
-export default ApplicationsPage;

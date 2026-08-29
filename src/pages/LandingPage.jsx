@@ -3,9 +3,13 @@ import Footer from "../components/Footer.jsx";
 import CtaButton from "../components/CtaButton.jsx";
 import HeroArt from "../components/HeroArt.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function LandingPage() {
+  const { user, role } = useAuth();
   const revealRef = useScrollReveal();
+  const dashboardLink = role === "employer" ? "/employer" : "/home";
+
   return (
     <div className="page">
       <Navbar variant="landing" />
@@ -23,8 +27,8 @@ export default function LandingPage() {
                 </h1>
                 <p className="hero-tagline-card__ready">Ready?</p>
                 <div className="hero-tagline-card__cta">
-                  <CtaButton to="/signup" variant="glow">
-                    Get Started
+                  <CtaButton to={user ? dashboardLink : "/signup"} variant="glow">
+                    {user ? "Go to Dashboard →" : "Get Started"}
                   </CtaButton>
                 </div>
               </div>
@@ -60,52 +64,60 @@ export default function LandingPage() {
                   <div className="progress-track">
                     <div className="progress-track__fill" />
                   </div>
-                  <span className="bar bar--semi" />
+                  <span className="bar bar--short" />
                 </div>
-                <div className="mini-card orange-bars">
+                <div className="mini-card">
                   <h4>Discover Jobs!</h4>
-                  <span className="bar bar--long" />
-                  <span className="bar bar--long" />
+                  <div className="mini-card__disco-btn">Browse Internships →</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="opportunity__art">
-            <HeroArt width={767} height={633} />
+          <div className="opportunity__aside">
+            <div className="feature-pill">
+              <strong>Personalized Match Score</strong>
+              <p>See how closely your skills match every role before applying.</p>
+            </div>
+            <div className="feature-pill">
+              <strong>Application Status Tracker</strong>
+              <p>Track every step from submission to interview in one place.</p>
+            </div>
+            <div className="feature-pill">
+              <strong>Built-In CV Builder</strong>
+              <p>Generate a clean, print-ready resume from your profile in seconds.</p>
+            </div>
           </div>
         </section>
 
-        {/* Find Jobs That Fit You */}
-        <section className="fit scroll-reveal" data-delay="100">
-          <div className="fit__preview">
-            <div className="fit__preview-bar">
-              <img src="/logo-nexora.webp" alt="" style={{ width: 24, height: 24 }} />
-              <span className="bar bar--long" style={{ background: "rgba(255,255,255,.4)" }} />
+        {/* For Employers */}
+        <section className="employer-banner scroll-reveal" data-delay="120">
+          <div className="employer-banner__body">
+            <div>
+              <span className="employer-banner__tag">FOR EMPLOYERS</span>
+              <h2>Find Great Talent, Faster.</h2>
+              <p>Post vacancies, filter candidate matches, and manage applications in a streamlined dashboard.</p>
+              <CtaButton to={user ? (role === "employer" ? "/employer" : "/home") : "/signup"} variant="dark">
+                {user && role === "employer" ? "Go to Employer Hub →" : "Start Hiring →"}
+              </CtaButton>
             </div>
-            <div className="fit__preview-job">
-              <strong>24 Jobs Found</strong>
-              <span className="bar bar--long" style={{ background: "rgba(255,255,255,.4)", marginTop: 8 }} />
-            </div>
-            <div className="fit__preview-job">
-              <strong>Internship</strong>
-              <span className="bar bar--semi" style={{ background: "rgba(255,255,255,.4)", marginTop: 8 }} />
-            </div>
-            <div className="fit__preview-job">
-              <strong>Entry Level</strong>
-              <span className="bar bar--long" style={{ background: "rgba(255,255,255,.4)", marginTop: 8 }} />
+            <div className="employer-banner__art">
+              <img src="/for-employer.png" alt="For Employers preview" />
             </div>
           </div>
+        </section>
 
-          <div>
-            <div className="card how-card" style={{ background: "transparent", boxShadow: "none", color: "var(--text-body)", padding: 0 }}>
-              <h2>Find Jobs That Fit You</h2>
-              <ol className="how-card__steps">
+        {/* How It Works */}
+        <section className="how-it-works scroll-reveal" data-delay="160">
+          <div className="how-it-works__card">
+            <h2>How It Works</h2>
+            <div className="how-it-works__content">
+              <ol className="how-steps">
                 <li className="how-step">
                   <span className="how-step__num">1</span>
                   <div>
-                    <strong>Create Profile</strong>
-                    <span>Build your profile and tell us what you are looking for.</span>
+                    <strong>Create Your Profile</strong>
+                    <span>Add your skills, education, and preferences to build your match profile.</span>
                   </div>
                 </li>
                 <li className="how-step">
@@ -123,8 +135,8 @@ export default function LandingPage() {
                   </div>
                 </li>
               </ol>
-              <CtaButton to="/signup" variant="pink">
-                Join Now
+              <CtaButton to={user ? dashboardLink : "/signup"} variant="pink">
+                {user ? "Open Dashboard →" : "Join Now"}
               </CtaButton>
             </div>
           </div>

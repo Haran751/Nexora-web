@@ -8,6 +8,7 @@ export const DEFAULT_PROFILE = {
   placeOfBirth: "Jakarta",
   location: "Jakarta",
   about: "",
+  avatarUrl: "",
   skills: [],
   education: [],
   experience: [],
