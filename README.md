@@ -9,6 +9,10 @@
   [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Local_Preview-success?style=for-the-badge)](http://localhost:5173)
   [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/Haran751/Nexora-web)
   [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+  
+  [![SDG 8](https://img.shields.io/badge/SDG_8-Decent_Work_%26_Economic_Growth-A21942?style=for-the-badge&logo=united-nations&logoColor=white)](https://sdgs.un.org/goals/goal8)
+  [![SDG 4](https://img.shields.io/badge/SDG_4-Quality_Education-C5192D?style=for-the-badge&logo=united-nations&logoColor=white)](https://sdgs.un.org/goals/goal4)
+  [![SDG 10](https://img.shields.io/badge/SDG_10-Reduced_Inequalities-DD1367?style=for-the-badge&logo=united-nations&logoColor=white)](https://sdgs.un.org/goals/goal10)
 
   **Submission for ITECHNO CUP 2026 - Web Development**
 
@@ -21,6 +25,10 @@
 ## 📋 Daftar Isi
 
 - [Tentang Proyek](#-tentang-proyek)
+  - [Latar Belakang](#latar-belakang)
+  - [Solusi yang Ditawarkan](#solusi-yang-ditawarkan)
+  - [Tujuan Proyek](#tujuan-proyek)
+  - [Keselarasan dengan SDGs](#-keselarasan-dengan-sdgs-sustainable-development-goals)
 - [Fitur Unggulan](#-fitur-unggulan)
 - [Demo & Screenshot](#-demo--screenshot)
 - [Teknologi](#-teknologi)
@@ -62,6 +70,16 @@ Nexora menawarkan solusi ekosistem karir terpadu dua sisi (Worker & Employer):
 - 🎯 **Tujuan Utama**: Membangun platform rekrutmen inklusif dan transparan yang mengintegrasikan pencarian kerja, ATS tracking, dan CV builder dalam satu wadah.
 - 📊 **Target Pengguna**: Pencari kerja (fresh graduate, profesional, freelancer) dan penyedia kerja (recruiter, UMKM, startup, corporate employer).
 - 💡 **Value Proposition**: Platform karir gratis berfitur lengkap yang menghilangkan friksi pembuatan CV, memberikan transparansi proses lamaran, dan mempermudah perusahaan mengelola pelamar.
+
+### 🌐 Keselarasan dengan SDGs (Sustainable Development Goals)
+
+Nexora berkomitmen mendukung agenda **PBB 2030** dengan berkontribusi langsung pada pencapaian Tujuan Pembangunan Berkelanjutan:
+
+| SDG | Target Spesifik | Kontribusi Nyata Nexora |
+| :--- | :--- | :--- |
+| **SDG 8: Decent Work and Economic Growth** <br> *(Pilar Utama)* | **Target 8.5 & 8.6**: Memperluas kesempatan kerja produktif, layak, dan memangkas pengangguran usia muda (*NEET*). <br>**Target 8.3**: Mendorong pertumbuhan formalisasi UMKM. | Fitur **Smart Job Discovery** dan **Easy Apply** 1-klik membuka akses bursa kerja transparan bagi fresh graduate. **Employer Dashboard** gratis membantu UMKM merekrut talenta tanpa biaya software ATS mahal. |
+| **SDG 4: Quality Education** <br> *(Pilar Pendukung)* | **Target 4.4**: Meningkatkan keterampilan relevan bagi pemuda untuk ketenagakerjaan dan pekerjaan yang layak. | **Instant CV Generator** (3 template ATS-friendly) mengedukasi kandidat menyusun portofolio profesional secara gratis, dilengkapi **Match Score** untuk memetakan kesiapan skill pelamar terhadap standar industri. |
+| **SDG 10: Reduced Inequalities** <br> *(Pilar Pendukung)* | **Target 10.2**: Mendorong inklusi sosial dan ekonomi yang setara tanpa diskriminasi dalam akses pekerjaan. | **Application Tracker** menghadirkan transparansi penuh di setiap tahapan seleksi kerja, menghilangkan asimetri informasi dan praktik *ghosting* recruiter bagi seluruh pelamar. |
 
 ---
 
