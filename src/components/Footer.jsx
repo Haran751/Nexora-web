@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import CompanyModal from "./CompanyModal.jsx";
 
 const columns = [
   {
@@ -14,49 +16,80 @@ const columns = [
     title: "For Employers",
     links: [
       { label: "Post a Job", to: "/employer" },
-      { label: "Find Candidates", to: "/employer" },
+      { label: "Candidate Search", to: "/employer" },
+      { label: "Employer Registration", to: "/signup" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About", to: "/welcome" },
-      { label: "Contact", to: "/welcome" },
-      { label: "Privacy", to: "/welcome" },
-      { label: "Terms", to: "/welcome" },
+      { label: "About", modal: "about" },
+      { label: "Contact", modal: "contact" },
+      { label: "Privacy Policy", modal: "privacy" },
+      { label: "Terms of Service", modal: "terms" },
     ],
   },
 ];
 
 export default function Footer() {
-  return (
-    <footer className="app-footer">
-      <div className="app-footer__grid">
-        <div className="app-footer__brand">
-          <div className="app-footer__logo">
-            <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" loading="lazy" decoding="async" />
-            <span>Nexora</span>
-          </div>
-          <p>Find Your Opportunity Yourself. We&apos;ll help.</p>
-        </div>
+  const [activeModal, setActiveModal] = useState(null);
 
-        {columns.map((col) => (
-          <div className="app-footer__col" key={col.title}>
-            <h4>{col.title}</h4>
-            <ul>
-              {col.links.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.to}>{link.label}</Link>
-                </li>
-              ))}
-            </ul>
+  return (
+    <>
+      <footer className="app-footer">
+        <div className="app-footer__grid">
+          <div className="app-footer__brand">
+            <div className="app-footer__logo">
+              <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" loading="lazy" decoding="async" />
+              <span>Nexora</span>
+            </div>
+            <p>Find Your Opportunity Yourself. We&apos;ll help.</p>
           </div>
-        ))}
-      </div>
-      <div className="app-footer__divider" />
-      <div className="app-footer__bottom">
-        © {new Date().getFullYear()} Nexora — All rights reserved.
-      </div>
-    </footer>
+
+          {columns.map((col) => (
+            <div className="app-footer__col" key={col.title}>
+              <h4>{col.title}</h4>
+              <ul>
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    {link.to ? (
+                      <Link to={link.to}>{link.label}</Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal(link.modal)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          color: "inherit",
+                          font: "inherit",
+                          fontSize: "inherit",
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                      >
+                        {link.label}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="app-footer__divider" />
+        <div className="app-footer__bottom">
+          © {new Date().getFullYear()} Nexora — All rights reserved.
+        </div>
+      </footer>
+
+      {activeModal && (
+        <CompanyModal
+          initialTab={activeModal}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+    </>
   );
 }

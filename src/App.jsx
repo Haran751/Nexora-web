@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+import ScrollToTop from "./components/ScrollToTop.jsx";
 
 // Route-level code splitting to optimize initial bundle size & load times
 const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
@@ -74,10 +75,12 @@ function RequireAuth({ allowEmployer = false, children }) {
 export default function App() {
   return (
     <HashRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/welcome" element={<LandingPage />} />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

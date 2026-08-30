@@ -1,19 +1,19 @@
 import { Link } from "react-router-dom";
 
 export function PlayIcon() {
-  return <span className="cta-btn__play" aria-hidden="true" />;
+  return null;
 }
 
 const isInternal = (to) => typeof to === "string" && to.startsWith("/");
 
-export default function CtaButton({ children, variant = "pink", to, className, ...rest }) {
+export default function CtaButton({ children, variant = "pink", to, className, icon, ...rest }) {
   const cls = `cta-btn cta-btn--${variant} ${className || ""}`;
   const isDangerous = typeof to === "string" && /^(javascript|data|vbscript):/i.test(to.trim());
 
   if (to && !isDangerous && isInternal(to)) {
     return (
       <Link to={to} className={cls} {...rest}>
-        <PlayIcon />
+        {icon && <span className="cta-btn__icon">{icon}</span>}
         {children}
       </Link>
     );
@@ -23,7 +23,7 @@ export default function CtaButton({ children, variant = "pink", to, className, .
     const safeHref = isDangerous ? "#" : to;
     return (
       <a href={safeHref} className={cls} {...rest}>
-        <PlayIcon />
+        {icon && <span className="cta-btn__icon">{icon}</span>}
         {children}
       </a>
     );
@@ -31,7 +31,7 @@ export default function CtaButton({ children, variant = "pink", to, className, .
 
   return (
     <button className={cls} {...rest}>
-      <PlayIcon />
+      {icon && <span className="cta-btn__icon">{icon}</span>}
       {children}
     </button>
   );

@@ -50,8 +50,8 @@ export default function JobDetailPage() {
         jobTitle: job.title,
         company: job.company,
         applicantId: user?.id,
-        applicantName: profile.name,
-        coverNote: profile.about,
+        applicantName: profile?.name || user?.email?.split("@")[0] || "Applicant",
+        coverNote: profile?.about || "",
       });
       setSent(true);
     } catch (err) {
@@ -92,7 +92,7 @@ export default function JobDetailPage() {
   }
 
   const tags = job.tags || [job.location, job.workMode, job.salary, job.posted];
-  const maxSkills = profile.skills?.length ? profile.skills.slice(0, 5) : ["—"];
+  const maxSkills = profile?.skills?.length ? profile.skills.slice(0, 5) : ["—"];
   const breakdown = job.matchBreakdown || { skills: 90, location: 95, experience: 85, workMode: 90 };
 
   return (
@@ -192,7 +192,7 @@ export default function JobDetailPage() {
                   <div className="modal-card__preview">
                     <div className="modal-card__row">
                       <span>Name</span>
-                      <strong>{profile.name || user?.email || "User"}</strong>
+                      <strong>{profile?.name || user?.email || "User"}</strong>
                     </div>
                     <div className="modal-card__row">
                       <span>Skills</span>
@@ -200,7 +200,7 @@ export default function JobDetailPage() {
                     </div>
                     <div className="modal-card__row">
                       <span>Profile Summary</span>
-                      <strong>{profile.about?.trim() ? profile.about.slice(0, 120) + "…" : "Standard profile"}</strong>
+                      <strong>{profile?.about?.trim() ? profile.about.slice(0, 120) + "…" : "Standard profile"}</strong>
                     </div>
                   </div>
                   <div className="modal-card__actions">

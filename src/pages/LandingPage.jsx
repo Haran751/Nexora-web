@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import CtaButton from "../components/CtaButton.jsx";
 import HeroArt from "../components/HeroArt.jsx";
+import MatchSimulator from "../components/MatchSimulator.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -36,12 +38,14 @@ export default function LandingPage() {
             <div>
               <div className="hero-tagline-card">
                 <h1 className="hero-tagline-card__title">
-                  Your friend in getting into your next job, <span className="hero-tagline-card__brand">Nexora</span>
+                  Launch your career with clarity and confidence, <span className="hero-tagline-card__brand">Nexora</span>
                 </h1>
-                <p className="hero-tagline-card__ready">Ready?</p>
+                <p className="hero-tagline-card__sub">
+                  Find internships and entry-level roles matched to your actual skills and potential.
+                </p>
                 <div className="hero-tagline-card__cta">
                   <CtaButton to={user ? dashboardLink : "/signup"} variant="glow">
-                    {user ? "Go to Dashboard →" : "Get Started"}
+                    {user ? "Go to Dashboard →" : "Get Started — It's Free"}
                   </CtaButton>
                 </div>
               </div>
@@ -49,23 +53,26 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Find Your Opportunity Yourself */}
+        {/* Find Opportunities Matched to You */}
         <section className="opportunity scroll-reveal" data-delay="80">
           <div>
             <div className="opportunity__head">
-              <h2>Find Your Opportunity Yourself.</h2>
-              <div className="opportunity__sub">we&apos;ll help</div>
+              <h2>Find Opportunities Matched to You.</h2>
+              <div className="opportunity__sub">we&apos;ll help you get there</div>
             </div>
 
             <span className="entry-badge">
-              <span className="entry-badge__ico">✓</span> Entry Level Friendly
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginRight: 6 }}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Entry Level Friendly
             </span>
 
-            <h3 className="opportunity__subhead">Easy Navigation</h3>
+            <h3 className="opportunity__subhead">Intuitive Career Dashboard</h3>
 
             <div className="mini-cards">
               <div className="mini-card mini-card--profil">
-                <h4>Profil</h4>
+                <h4>Profile</h4>
                 <div className="mini-card__avatar">A</div>
                 <span className="bar bar--long" />
                 <span className="bar bar--semi" />
@@ -73,42 +80,68 @@ export default function LandingPage() {
               </div>
               <div className="mini-cards__stack">
                 <div className="mini-card">
-                  <h4>Pending Application</h4>
+                  <h4>Application Status</h4>
                   <div className="progress-track">
                     <div className="progress-track__fill" />
                   </div>
                   <span className="bar bar--short" />
                 </div>
                 <div className="mini-card">
-                  <h4>Discover Jobs!</h4>
-                  <div className="mini-card__disco-btn">Browse Internships →</div>
+                  <h4>Explore Open Roles</h4>
+                  <Link to="/jobs" className="mini-card__disco-btn">Browse Internships →</Link>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Logo Nexora di kanan */}
+          {/* Interactive Match Simulator */}
           <div className="opportunity__aside">
-            <div className="opportunity__art">
-              <HeroArt width={767} height={633} />
-            </div>
+            <MatchSimulator />
           </div>
         </section>
 
         {/* Find Jobs That Fit You */}
         <section className="fit scroll-reveal" data-delay="120">
-          {/* Mini preview Job Discovery (lebih kecil dari ukuran normal) di atas */}
+          {/* Mini preview Job Discovery */}
           <div className="fit__preview">
-            <div className="fit__preview-bar">
+            <Link to="/jobs" className="fit__preview-bar" style={{ textDecoration: "none", color: "inherit", display: "flex" }}>
               <span className="fit__preview-search">
                 <SearchIcon />
               </span>
               <span className="fit__preview-hint">Search jobs, companies, keywords…</span>
+            </Link>
+
+            {/* Quick-filter tags */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "10px 0 14px" }}>
+              {[
+                { label: "Remote", to: "/jobs" },
+                { label: "Paid Internship", to: "/jobs" },
+                { label: "Entry Level", to: "/jobs" },
+                { label: "Design", to: "/jobs" },
+              ].map((pill) => (
+                <Link
+                  key={pill.label}
+                  to={pill.to}
+                  style={{
+                    fontSize: "0.75rem",
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    background: "rgba(255, 255, 255, 0.12)",
+                    color: "rgba(255, 255, 255, 0.9)",
+                    textDecoration: "none",
+                    border: "1px solid rgba(255, 255, 255, 0.18)",
+                    transition: "all 0.15s ease",
+                  }}
+                  className="quick-filter-pill"
+                >
+                  {pill.label}
+                </Link>
+              ))}
             </div>
 
             <div className="fit__preview-list">
               {previewJobs.map((job, i) => (
-                <div className="fit__preview-job" key={i}>
+                <Link to="/jobs" className="fit__preview-job" key={i} style={{ textDecoration: "none", color: "inherit" }}>
                   <div className="fit__preview-job__top">
                     <span className="fit__preview-match">{job.match}</span>
                     <div>
@@ -121,30 +154,29 @@ export default function LandingPage() {
                       <span key={tag}>{tag}</span>
                     ))}
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>
 
-          {/* How It Works di bawah + Join Now */}
+          {/* How It Works for candidates + Join Now */}
           <div className="how-card">
-            <span className="employer-banner__tag">FOR EMPLOYERS</span>
             <h2>Find Jobs That Fit You</h2>
-            <p className="fit__sub">How it works</p>
+            <p className="fit__sub">How it works for job seekers</p>
 
             <ol className="how-card__steps">
               <li className="how-step">
                 <span className="how-step__num">1</span>
                 <div>
                   <strong>Create Your Profile</strong>
-                  <span>Add your skills, education, and preferences to build your match profile.</span>
+                  <span>Add your skills, education, and interests to build your match profile.</span>
                 </div>
               </li>
               <li className="how-step">
                 <span className="how-step__num">2</span>
                 <div>
                   <strong>Get Matched</strong>
-                  <span>We match you with opportunities that truly fit.</span>
+                  <span>We match you with entry-level opportunities that genuinely fit.</span>
                 </div>
               </li>
               <li className="how-step">
@@ -157,8 +189,13 @@ export default function LandingPage() {
             </ol>
 
             <CtaButton to={user ? dashboardLink : "/signup"} variant="pink">
-              {user ? "Open Dashboard →" : "Join Now"}
+              {user ? "Open Dashboard →" : "Join Now — It's Free"}
             </CtaButton>
+
+            <p className="how-card__employer-link">
+              Looking to hire?{" "}
+              <Link to="/signup">Post entry-level roles as an employer →</Link>
+            </p>
           </div>
         </section>
       </main>
