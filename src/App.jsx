@@ -18,6 +18,7 @@ const CVGeneratorPage = lazy(() => import("./pages/CVGeneratorPage.jsx"));
 const SavedJobsPage = lazy(() => import("./pages/SavedJobsPage.jsx"));
 const ApplicationsPage = lazy(() => import("./pages/ApplicationsPage.jsx"));
 const EmployerDashboardPage = lazy(() => import("./pages/EmployerDashboardPage.jsx"));
+const CompanyProfilePage = lazy(() => import("./pages/CompanyProfilePage.jsx"));
 
 function PageLoader() {
   return (
@@ -140,6 +141,14 @@ export default function App() {
               element={
                 <ProtectedEmployerRoute>
                   <EmployerDashboardPage />
+                </ProtectedEmployerRoute>
+              }
+            />
+            <Route
+              path="/employer/company"
+              element={
+                <ProtectedEmployerRoute>
+                  <CompanyProfilePage />
                 </ProtectedEmployerRoute>
               }
             />

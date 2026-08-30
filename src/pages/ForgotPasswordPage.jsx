@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import HeroArt from "../components/HeroArt.jsx";
 import OtpInput from "../components/OtpInput.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+
+const gradient = "linear-gradient(90deg, #ad4359 0%, #ab4259 30%, #ad4359 55%, #4d194b 100%)";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -101,79 +102,68 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="signup login-page">
-      <HeroArt width={767} height={633} className="signup__art-bg" />
+    <div className="forgot">
+      <header className="forgot__navbar">
+        <Link to="/login" className="forgot__navbar-brand">
+          <img src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" loading="lazy" decoding="async" />
+          Nexora
+        </Link>
+      </header>
 
-      <h1 className="signup__title">Reset Password</h1>
-      <p className="signup__sub">Recover access to your Nexora account</p>
+      <div className="forgot__content">
 
       {authError && (
-        <div
-          style={{
-            maxWidth: 440,
-            width: "100%",
-            margin: "0 auto 16px",
-            padding: "10px 14px",
-            background: "rgba(220, 53, 69, 0.2)",
-            border: "1px solid rgba(220, 53, 69, 0.4)",
-            borderRadius: "8px",
-            color: "#ff8b94",
-            fontSize: "0.88rem",
-            textAlign: "center",
-          }}
-        >
+        <div className="forgot__error">
           {authError}
         </div>
       )}
 
       {step === "email" && (
-        <div className="signup__form-wrap">
-          <form className="signup-form signup-form--worker" onSubmit={handleRequestOtp} noValidate>
-            <div className="field">
-              <label htmlFor="fp-email">Enter your Gmail / Account Email</label>
+        <div className="forgot-card" role="dialog" aria-modal="true" aria-label="Forgot password">
+          <h2 className="forgot-card__title">Forgot Your Password?</h2>
+          <p className="forgot-card__sub">
+            Masukkan email terdaftar Anda dan kami akan mengirimkan kode OTP untuk memulihkan akun Anda.
+          </p>
+
+          <form onSubmit={handleRequestOtp} noValidate>
+            <div className="forgot-field">
+              <label htmlFor="fp-email">Email Terdaftar</label>
               <input
                 id="fp-email"
                 type="email"
-                placeholder="you@gmail.com"
+                placeholder="contoh@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
               />
-              {emailError && <p className="field__error">{emailError}</p>}
+              {emailError && <p className="forgot-field__error">{emailError}</p>}
             </div>
 
-            <button type="submit" className="cta-btn cta-btn--dark" disabled={submitting}>
-              <span className="cta-btn__play" /> {submitting ? "Sending OTP…" : "Send 6-Digit OTP"}
+            <button type="submit" className="forgot-btn" style={{ background: gradient }} disabled={submitting}>
+              {submitting ? "Mengirim…" : "Request kode otp"}
             </button>
-
-            <p className="signup-form__alt">
-              Remember your password?{" "}
-              <Link to="/login" style={{ color: "inherit", fontWeight: 600 }}>
-                Log in
-              </Link>
-            </p>
           </form>
+
+          <Link to="/login" className="forgot-card__back">
+            ← Back To Login
+          </Link>
         </div>
       )}
 
       {step === "otp" && (
-        <div className="signup__form-wrap">
-          <button className="signup-form__back" onClick={() => { setStep("email"); setVerifiedToken(""); }}>
+        <div className="forgot-card" role="dialog" aria-modal="true" aria-label="Check your email">
+          <button className="forgot-card__back-top" onClick={() => { setStep("email"); setVerifiedToken(""); }}>
             ← Change email
           </button>
 
-          <div className="signup-form signup-form--worker">
-            <h3>Enter OTP Code</h3>
-            <p className="signup__sub" style={{ textAlign: "left", margin: "0 0 12px" }}>
-              A 6-digit recovery code has been sent to:
-            </p>
+          <h2 className="forgot-card__title">Check your email!</h2>
+          <p className="forgot-card__sub">
+            Kami telah mengirimkan kode 6-digit ke <strong className="forgot-card__email">{email}</strong>. Masukkan
+            kode di bawah untuk melanjutkan.
+          </p>
 
-            <div className="otp-info-pill">
-              <span>✉️</span>
-              <strong>{email}</strong>
-            </div>
-
-            {!verifiedToken ? (
+          {!verifiedToken ? (
+            <>
               <OtpInput
                 email={email}
                 onComplete={handleVerifyOtp}
@@ -182,72 +172,60 @@ export default function ForgotPasswordPage() {
                 error={authError}
                 demoCode={demoCode}
               />
-            ) : (
-              <form onSubmit={handleResetPassword} style={{ marginTop: 14 }}>
-                <div
-                  style={{
-                    background: "rgba(46, 204, 113, 0.2)",
-                    border: "1px solid rgba(46, 204, 113, 0.4)",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    color: "#a3f7bf",
-                    fontSize: "0.85rem",
-                    marginBottom: 14,
-                    textAlign: "center",
-                  }}
-                >
-                  ✓ OTP verified! Please set your new password.
-                </div>
+              <button className="forgot-btn" style={{ background: gradient }} disabled={submitting}>
+                Enter
+              </button>
+            </>
+          ) : (
+            <form onSubmit={handleResetPassword} noValidate>
+              <div className="forgot-verified">✓ OTP verified! Silakan atur password baru Anda.</div>
+              <div className="forgot-field">
+                <label htmlFor="new-pass">New Password</label>
+                <input
+                  id="new-pass"
+                  type="password"
+                  placeholder="Minimal 6 karakter"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="forgot-field">
+                <label htmlFor="conf-pass">Confirm New Password</label>
+                <input
+                  id="conf-pass"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                {passwordError && <p className="forgot-field__error">{passwordError}</p>}
+              </div>
+              <button type="submit" className="forgot-btn" style={{ background: gradient }} disabled={submitting}>
+                {submitting ? "Memperbarui…" : "Update Password"}
+              </button>
+            </form>
+          )}
 
-                <div className="field">
-                  <label htmlFor="new-pass">New Password</label>
-                  <input
-                    id="new-pass"
-                    type="password"
-                    placeholder="At least 6 characters"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    autoFocus
-                  />
-                </div>
-
-                <div className="field">
-                  <label htmlFor="conf-pass">Confirm New Password</label>
-                  <input
-                    id="conf-pass"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                  {passwordError && <p className="field__error">{passwordError}</p>}
-                </div>
-
-                <button type="submit" className="cta-btn cta-btn--dark" disabled={submitting}>
-                  <span className="cta-btn__play" /> {submitting ? "Updating Password…" : "Update Password"}
-                </button>
-              </form>
-            )}
-          </div>
+          <Link to="/login" className="forgot-card__back">
+            ← Back To Login
+          </Link>
         </div>
       )}
 
       {step === "success" && (
-        <div className="card" style={{ maxWidth: 420, textAlign: "center" }}>
-          <span style={{ fontSize: "2.4rem", display: "block", marginBottom: 8 }}>🎉</span>
-          <h3>Password Updated!</h3>
-          <p style={{ color: "rgba(255,255,255,.85)" }}>
-            Your account password has been successfully reset. You can now log in with your new credentials.
+        <div className="forgot-card forgot-card--success">
+          <span className="forgot-card__emoji">🎉</span>
+          <h2 className="forgot-card__title">Password Updated!</h2>
+          <p className="forgot-card__sub">
+            Password akun Anda berhasil direset. Anda kini dapat masuk dengan kredensial baru.
           </p>
-          <button
-            onClick={() => navigate("/login")}
-            className="cta-btn cta-btn--orange"
-            style={{ marginTop: 14, width: "100%" }}
-          >
-            <span className="cta-btn__play" /> Back to Login
+          <button className="forgot-btn" style={{ background: gradient }} onClick={() => navigate("/login")}>
+            Back to Login
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

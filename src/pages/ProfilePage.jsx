@@ -49,8 +49,12 @@ function ActivityChart() {
     <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Activity over time">
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#4C7DFF" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#4C7DFF" stopOpacity="0.02" />
+          <stop offset="0" stopColor="#632248" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#42154c" stopOpacity="0.03" />
+        </linearGradient>
+        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#632248" />
+          <stop offset="1" stopColor="#42154c" />
         </linearGradient>
       </defs>
 
@@ -67,7 +71,7 @@ function ActivityChart() {
       })}
 
       <path d={areaPath} fill="url(#areaGrad)" />
-      <path d={linePath} fill="none" stroke="#4C7DFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
       <g>
         {[
@@ -101,6 +105,79 @@ function ActivityChart() {
         rx="10"
       />
     </svg>
+  );
+}
+
+function SkillDonutChart({ skills = [] }) {
+  const hasSkills = Array.isArray(skills) && skills.length > 0;
+  const segments = hasSkills
+    ? skills.slice(0, 3).map((s, i) => ({
+        label: s,
+        value: i === 0 ? 50 : i === 1 ? 30 : 20,
+        color: ["#42154C", "#632248", "#E8A0A8"][i],
+      }))
+    : [
+        { label: "Editing", value: 50, color: "#42154C" },
+        { label: "Design", value: 30, color: "#632248" },
+        { label: "Photography", value: 20, color: "#E8A0A8" },
+      ];
+
+  const r = 80;
+  const c = 2 * Math.PI * r;
+  const total = segments.reduce((s, x) => s + x.value, 0);
+
+  let acc = 0;
+  const arcs = segments.map((seg) => {
+    const frac = seg.value / total;
+    const offset = acc * c;
+    const len = frac * c;
+    acc += frac;
+    return { ...seg, len, offset };
+  });
+
+  return (
+    <div className="skill-donut">
+      <div className="skill-donut__chart">
+        <svg viewBox="0 0 200 200" role="img" aria-label="Skill breakdown">
+          <circle
+            cx="100"
+            cy="100"
+            r={r}
+            fill="none"
+            stroke="#EFE3E8"
+            strokeWidth="26"
+            className="skill-donut__track"
+          />
+          {arcs.map((seg, i) => (
+            <circle
+              key={i}
+              cx="100"
+              cy="100"
+              r={r}
+              fill="none"
+              stroke={seg.color}
+              strokeWidth="26"
+              strokeDasharray={`${seg.len} ${c - seg.len}`}
+              strokeDashoffset={-seg.offset}
+              transform="rotate(-90 100 100)"
+              strokeLinecap="butt"
+            />
+          ))}
+        </svg>
+        <div className="skill-donut__center">
+          <strong>{total}%</strong>
+        </div>
+      </div>
+      <div className="skill-donut__legend">
+        {segments.map((seg) => (
+          <div className="skill-donut__legend-item" key={seg.label}>
+            <span className="skill-donut__dot" style={{ background: seg.color }} />
+            <span className="skill-donut__legend-label">{seg.label}</span>
+            <span className="skill-donut__legend-value">{seg.value}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -542,6 +619,11 @@ export default function ProfilePage() {
           <div className="chart">
             <ActivityChart />
           </div>
+        </div>
+
+        <div className="profile__skill scroll-reveal">
+          <h3>Skill</h3>
+          <SkillDonutChart skills={profile.skills} />
         </div>
 
         <AvatarUploadModal
