@@ -7,7 +7,7 @@ export default function HeroArt({ className = "", width = 460, height }) {
       width={width || 767}
       height={height || 633}
       className={`hero-art ${className}`}
-      fetchPriority="high"
+      fetchpriority="high"
       decoding="async"
       style={{
         display: "block",

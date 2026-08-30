@@ -220,7 +220,7 @@ export default function Navbar({ variant = "app", onEmployerView }) {
   return (
     <header className={`navbar${variant === "landing" ? " navbar--landing" : ""}${scrolled ? " navbar--scrolled" : ""}`}>
       <Link to={user ? (role === "employer" ? "/employer" : "/home") : "/"} className="navbar__brand">
-        <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" fetchPriority="high" />
+        <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" fetchpriority="high" />
         Nexora
       </Link>
 

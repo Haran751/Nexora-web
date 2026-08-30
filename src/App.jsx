@@ -77,7 +77,7 @@ function RequireAuth({ allowEmployer = false, children }) {
 
 export default function App() {
   return (
-    <HashRouter>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ScrollToTop />
       <AuthProvider>
         <Suspense fallback={<PageLoader />}>
