@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
-import CompanyModal from "./CompanyModal.jsx";
+
+const CompanyModal = lazy(() => import("./CompanyModal.jsx"));
 
 const columns = [
   {
@@ -85,10 +86,12 @@ export default function Footer() {
       </footer>
 
       {activeModal && (
-        <CompanyModal
-          initialTab={activeModal}
-          onClose={() => setActiveModal(null)}
-        />
+        <Suspense fallback={null}>
+          <CompanyModal
+            initialTab={activeModal}
+            onClose={() => setActiveModal(null)}
+          />
+        </Suspense>
       )}
     </>
   );

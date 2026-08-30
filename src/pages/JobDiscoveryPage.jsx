@@ -72,6 +72,13 @@ export default function JobDiscoveryPage() {
   const [deadline, setDeadline] = useState("Any");
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setQuery(search.trim());
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
     let active = true;
     async function loadData() {
       setLoading(true);

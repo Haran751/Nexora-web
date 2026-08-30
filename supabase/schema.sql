@@ -330,3 +330,40 @@ create trigger auto_confirm_user_trigger
 -- Konfirmasi semua user yang saat ini masih pending email confirmation
 update auth.users set email_confirmed_at = now() where email_confirmed_at is null;
 
+-- ============================================================
+-- 6. TABLE: notifications (User & Employer Alerts)
+-- ============================================================
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  type text not null default 'status' check (type in ('application', 'status', 'interview', 'deadline', 'recommendation', 'applicant')),
+  title text not null,
+  message text default '',
+  link text default '',
+  unread boolean not null default true,
+  created_at timestamptz default timezone('utc'::text, now()) not null
+);
+
+alter table public.notifications enable row level security;
+
+drop policy if exists "Users can view their own notifications" on public.notifications;
+create policy "Users can view their own notifications"
+  on public.notifications for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can update their own notifications" on public.notifications;
+create policy "Users can update their own notifications"
+  on public.notifications for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Authenticated users can insert notifications" on public.notifications;
+create policy "Authenticated users can insert notifications"
+  on public.notifications for insert
+  to authenticated
+  with check (auth.uid() is not null);
+
+
+

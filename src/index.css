@@ -1616,6 +1616,8 @@ a {
   padding: 20px 22px;
   box-shadow: var(--shadow-card);
   transition: transform 0.15s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 160px;
 }
 
 .job-card:hover {
@@ -2661,6 +2663,8 @@ a {
 .app-card {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 130px;
 }
 
 .app-card:hover {
@@ -3074,27 +3078,79 @@ a {
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body * {
     visibility: hidden;
   }
+
   #cv-sheet,
   #cv-sheet * {
     visibility: visible;
   }
-  #cv-sheet {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100%;
-    box-shadow: none;
-    border-radius: 0;
-    padding: 32px;
-  }
+
   .cv-print-btn,
   .cv-side,
   .navbar,
-  .app-footer {
+  .app-footer,
+  .jd-header,
+  .cv-notice-banner {
     display: none !important;
+  }
+
+  .page,
+  .page__body,
+  .cv,
+  .cv-layout,
+  .cv-main {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: transparent !important;
+  }
+
+  #cv-sheet {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .cv-sheet-inner {
+    width: 100% !important;
+  }
+
+  .cv-entry,
+  .cv-sec {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .cv-head--bar {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 
@@ -3732,8 +3788,10 @@ a {
   }
 
   .landing-hero__art .heroart,
-  .landing-hero__art svg {
+  .landing-hero__art svg,
+  .landing-hero__art img {
     max-width: 100%;
+    height: auto;
   }
 
   .hero-tagline-card {
@@ -4332,24 +4390,4 @@ a {
 
 .avatar-modal-delete-btn:hover {
   background: #fde8e8;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }

@@ -1,12 +1,5 @@
 import { useEffect, useRef } from "react";
-
-const dummyNotifications = [
-  { id: 1, type: "application", title: "Application sent to Nexora Studio", time: "2 jam lalu", unread: true },
-  { id: 2, type: "status", title: "Your application is now In Review", time: "5 jam lalu", unread: true },
-  { id: 3, type: "interview", title: "Interview scheduled with Brightmind Agency", time: "1 hari lalu", unread: true },
-  { id: 4, type: "deadline", title: "Deadline soon: Data Analyst (Entry)", time: "2 hari lalu", unread: false },
-  { id: 5, type: "recommendation", title: "New job matched for your profile", time: "3 hari lalu", unread: false },
-];
+import { useNavigate } from "react-router-dom";
 
 const typeIcons = {
   application: "✓",
@@ -14,10 +7,18 @@ const typeIcons = {
   interview: "◎",
   deadline: "◷",
   recommendation: "★",
+  applicant: "👤",
 };
 
-export default function NotificationPanel({ open, onClose }) {
+export default function NotificationPanel({
+  open,
+  onClose,
+  notifications = [],
+  onMarkAllRead,
+  onItemClick,
+}) {
   const panelRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!open) return undefined;
@@ -30,30 +31,64 @@ export default function NotificationPanel({ open, onClose }) {
 
   if (!open) return null;
 
+  const handleClickItem = (notif) => {
+    if (onItemClick) onItemClick(notif);
+    if (notif.link) {
+      onClose();
+      navigate(notif.link);
+    }
+  };
+
+  const hasUnread = notifications.some((n) => n.unread);
+
   return (
     <div className="notif-panel" ref={panelRef} role="dialog" aria-label="Notifications">
       <div className="notif-panel__head">
         <strong>Notifications</strong>
-        <button
-          className="notif-panel__mark"
-          onClick={() => {
-            /* mark all read */
-          }}
-        >
-          Mark all read
-        </button>
+        {hasUnread && (
+          <button className="notif-panel__mark" onClick={onMarkAllRead}>
+            Mark all read
+          </button>
+        )}
       </div>
-      <ul className="notif-panel__list">
-        {dummyNotifications.map((n) => (
-          <li key={n.id} className={`notif-item${n.unread ? " notif-item--unread" : ""}`}>
-            <span className={`notif-item__ico notif-item__ico--${n.type}`}>{typeIcons[n.type] || "•"}</span>
-            <div className="notif-item__body">
-              <span className="notif-item__title">{n.title}</span>
-              <span className="notif-item__time">{n.time}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
+
+      {notifications.length > 0 ? (
+        <ul className="notif-panel__list">
+          {notifications.map((n) => (
+            <li
+              key={n.id}
+              className={`notif-item${n.unread ? " notif-item--unread" : ""}`}
+              onClick={() => handleClickItem(n)}
+              style={{ cursor: "pointer" }}
+            >
+              <span className={`notif-item__ico notif-item__ico--${n.type}`}>
+                {typeIcons[n.type] || "•"}
+              </span>
+              <div className="notif-item__body">
+                <span className="notif-item__title">{n.title}</span>
+                {n.message && (
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "rgba(61, 16, 40, 0.7)",
+                      display: "block",
+                      marginTop: "2px",
+                      lineHeight: "1.3",
+                    }}
+                  >
+                    {n.message}
+                  </span>
+                )}
+                <span className="notif-item__time">{n.time}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div style={{ padding: "28px 16px", textAlign: "center", color: "rgba(61,16,40,0.6)", fontSize: "13px" }}>
+          Belum ada notifikasi untuk akun Anda.
+        </div>
+      )}
     </div>
   );
 }

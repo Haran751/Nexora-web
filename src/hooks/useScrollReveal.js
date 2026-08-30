@@ -26,7 +26,7 @@ export default function useScrollReveal(deps = []) {
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.1, rootMargin: "80px 0px" }
     );
 
     targets.forEach((t) => {

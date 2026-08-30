@@ -1,6 +1,8 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import nodemailer from "nodemailer";
+import fs from "fs";
+import path from "path";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
@@ -25,6 +27,15 @@ function securityHeadersPlugin() {
     name: "security-headers-plugin",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
+        if (req.url === "/robots.txt" || req.url?.startsWith("/robots.txt?")) {
+          const robotsPath = path.resolve(process.cwd(), "public/robots.txt");
+          if (fs.existsSync(robotsPath)) {
+            res.setHeader("Content-Type", "text/plain; charset=utf-8");
+            res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+            res.end(fs.readFileSync(robotsPath, "utf-8"));
+            return;
+          }
+        }
         res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("X-Frame-Options", "SAMEORIGIN");
         res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -313,9 +324,13 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       open: true,
     },
+    esbuild: {
+      drop: mode === "production" ? ["console", "debugger"] : [],
+    },
     build: {
       target: "es2020",
       cssCodeSplit: true,
+      cssMinify: true,
       sourcemap: false,
       chunkSizeWarningLimit: 600,
       rollupOptions: {
@@ -325,10 +340,14 @@ export default defineConfig(({ mode }) => {
               if (id.includes("@supabase")) {
                 return "vendor-supabase";
               }
-              if (id.includes("react") || id.includes("react-dom") || id.includes("react-router-dom")) {
+              if (
+                id.includes("react") ||
+                id.includes("react-dom") ||
+                id.includes("react-router") ||
+                id.includes("scheduler")
+              ) {
                 return "vendor-react";
               }
-              return "vendor-libs";
             }
           },
         },

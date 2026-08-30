@@ -1,11 +1,13 @@
+import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import CtaButton from "../components/CtaButton.jsx";
 import HeroArt from "../components/HeroArt.jsx";
-import MatchSimulator from "../components/MatchSimulator.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
+
+const MatchSimulator = lazy(() => import("../components/MatchSimulator.jsx"));
 
 const SearchIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -96,7 +98,9 @@ export default function LandingPage() {
 
           {/* Interactive Match Simulator */}
           <div className="opportunity__aside">
-            <MatchSimulator />
+            <Suspense fallback={<div style={{ minHeight: 280 }} />}>
+              <MatchSimulator />
+            </Suspense>
           </div>
         </section>
 

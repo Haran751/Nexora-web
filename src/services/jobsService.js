@@ -46,7 +46,56 @@ function mapJobFromDB(row) {
   };
 }
 
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const jobsCache = new Map();
+const jobByIdCache = new Map();
+
+export function clearJobsCache() {
+  jobsCache.clear();
+  jobByIdCache.clear();
+}
+
+function getFilterKey(filters = {}) {
+  return `${filters.status || "Active"}_${filters.employerId || "all"}`;
+}
+
+function indexJobs(jobsList) {
+  if (Array.isArray(jobsList)) {
+    jobsList.forEach((j) => {
+      if (j?.id) jobByIdCache.set(String(j.id), j);
+    });
+  }
+}
+
 export async function fetchJobs(filters = {}) {
+  const cacheKey = getFilterKey(filters);
+  const cached = jobsCache.get(cacheKey);
+  const now = Date.now();
+
+  // Return fresh cache immediately
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  // SWR: If we have stale cache, return it immediately and revalidate in background
+  if (cached) {
+    fetchJobsRaw(filters)
+      .then((fresh) => {
+        jobsCache.set(cacheKey, { data: fresh, timestamp: Date.now() });
+        indexJobs(fresh);
+      })
+      .catch(() => {});
+    return cached.data;
+  }
+
+  // Cold cache: fetch directly
+  const data = await fetchJobsRaw(filters);
+  jobsCache.set(cacheKey, { data, timestamp: now });
+  indexJobs(data);
+  return data;
+}
+
+async function fetchJobsRaw(filters = {}) {
   if (isSupabaseConfigured) {
     try {
       let query = supabase.from("jobs").select("*").order("created_at", { ascending: false });
@@ -84,11 +133,19 @@ function isValidUuid(id) {
 }
 
 export async function fetchJobById(id) {
+  const strId = String(id);
+  // Check fast in-memory index
+  if (jobByIdCache.has(strId)) {
+    return jobByIdCache.get(strId);
+  }
+
   if (isSupabaseConfigured && isValidUuid(id)) {
     try {
       const { data, error } = await supabase.from("jobs").select("*").eq("id", id).maybeSingle();
       if (!error && data) {
-        return mapJobFromDB(data);
+        const job = mapJobFromDB(data);
+        if (job) jobByIdCache.set(strId, job);
+        return job;
       }
     } catch (err) {
       console.warn("fetchJobById error, falling back to local:", err.message);
@@ -96,7 +153,10 @@ export async function fetchJobById(id) {
   }
 
   const list = loadLocalJobs();
-  return list.find((j) => String(j.id) === String(id)) || null;
+  indexJobs(list);
+  const found = list.find((j) => String(j.id) === strId) || null;
+  if (found) jobByIdCache.set(strId, found);
+  return found;
 }
 
 export async function createJob(jobData, userId) {
@@ -134,7 +194,12 @@ export async function createJob(jobData, userId) {
 
     const { data, error } = await supabase.from("jobs").insert([payload]).select().single();
     if (error) throw error;
-    return mapJobFromDB(data);
+    const mapped = mapJobFromDB(data);
+    if (mapped) {
+      jobByIdCache.set(String(mapped.id), mapped);
+      jobsCache.clear();
+    }
+    return mapped;
   }
 
   // Local fallback
@@ -163,6 +228,8 @@ export async function createJob(jobData, userId) {
   const current = loadLocalJobs();
   const next = [newJob, ...current];
   saveLocalJobs(next);
+  jobByIdCache.set(String(newJob.id), newJob);
+  jobsCache.clear();
   return newJob;
 }
 
@@ -178,11 +245,21 @@ export async function updateJob(id, updates) {
 
     const { data, error } = await supabase.from("jobs").update(payload).eq("id", id).select().single();
     if (error) throw error;
-    return mapJobFromDB(data);
+    const mapped = mapJobFromDB(data);
+    if (mapped) {
+      jobByIdCache.set(String(mapped.id), mapped);
+      jobsCache.clear();
+    }
+    return mapped;
   }
 
   const current = loadLocalJobs();
   const next = current.map((j) => (String(j.id) === String(id) ? { ...j, ...updates } : j));
   saveLocalJobs(next);
-  return next.find((j) => String(j.id) === String(id));
+  const updated = next.find((j) => String(j.id) === String(id));
+  if (updated) {
+    jobByIdCache.set(String(updated.id), updated);
+    jobsCache.clear();
+  }
+  return updated;
 }

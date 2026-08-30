@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import NotificationPanel from "./NotificationPanel.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { fetchSavedJobIds } from "../services/savedJobsService.js";
+
+const NotificationPanel = lazy(() => import("./NotificationPanel.jsx"));
 
 const BellIcon = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -28,6 +28,7 @@ export default function Navbar({ variant = "app", onEmployerView }) {
   const { user, profile, role, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [savedCount, setSavedCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -35,7 +36,16 @@ export default function Navbar({ variant = "app", onEmployerView }) {
   const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 50);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -59,16 +69,75 @@ export default function Navbar({ variant = "app", onEmployerView }) {
   }, [menuOpen]);
 
   useEffect(() => {
+    if (!user || variant === "landing") return;
     let active = true;
     async function loadSavedCount() {
-      const set = await fetchSavedJobIds(user?.id);
-      if (active) setSavedCount(set.size);
+      try {
+        const { fetchSavedJobIds } = await import("../services/savedJobsService.js");
+        const set = await fetchSavedJobIds(user.id);
+        if (active) setSavedCount(set.size);
+      } catch {}
     }
     loadSavedCount();
     return () => {
       active = false;
     };
-  }, [user?.id]);
+  }, [user?.id, variant]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setNotifications([]);
+      return;
+    }
+
+    let active = true;
+    async function loadNotifs() {
+      try {
+        const { fetchNotifications } = await import("../services/notificationsService.js");
+        const list = await fetchNotifications(user.id, {
+          role,
+          userName: profile?.name || profile?.companyName || user?.email?.split("@")[0],
+        });
+        if (active) setNotifications(list);
+      } catch {}
+    }
+
+    loadNotifs();
+
+    const handleNotifUpdate = () => {
+      loadNotifs();
+    };
+
+    window.addEventListener("nexora:notification_change", handleNotifUpdate);
+    return () => {
+      active = false;
+      window.removeEventListener("nexora:notification_change", handleNotifUpdate);
+    };
+  }, [user?.id, role, profile?.name, profile?.companyName]);
+
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const handleMarkAllRead = async () => {
+    if (!user?.id) return;
+    try {
+      const { markAllNotificationsRead } = await import("../services/notificationsService.js");
+      await markAllNotificationsRead(user.id);
+      setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+    } catch {}
+  };
+
+  const handleNotificationItemClick = async (notif) => {
+    if (!user?.id || !notif?.id) return;
+    if (notif.unread) {
+      try {
+        const { markNotificationRead } = await import("../services/notificationsService.js");
+        await markNotificationRead(user.id, notif.id);
+        setNotifications((prev) =>
+          prev.map((n) => (String(n.id) === String(notif.id) ? { ...n, unread: false } : n))
+        );
+      } catch {}
+    }
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -151,7 +220,7 @@ export default function Navbar({ variant = "app", onEmployerView }) {
   return (
     <header className={`navbar${variant === "landing" ? " navbar--landing" : ""}${scrolled ? " navbar--scrolled" : ""}`}>
       <Link to={user ? (role === "employer" ? "/employer" : "/home") : "/"} className="navbar__brand">
-        <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" fetchpriority="high" />
+        <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" fetchPriority="high" />
         Nexora
       </Link>
 
@@ -293,9 +362,19 @@ export default function Navbar({ variant = "app", onEmployerView }) {
                 onClick={() => setNotifOpen((o) => !o)}
               >
                 <BellIcon />
-                <span className="navbar__bell-badge">{UNREAD_COUNT}</span>
+                {unreadCount > 0 && <span className="navbar__bell-badge">{unreadCount}</span>}
               </button>
-              <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
+              {notifOpen && (
+                <Suspense fallback={null}>
+                  <NotificationPanel
+                    open={notifOpen}
+                    onClose={() => setNotifOpen(false)}
+                    notifications={notifications}
+                    onMarkAllRead={handleMarkAllRead}
+                    onItemClick={handleNotificationItemClick}
+                  />
+                </Suspense>
+              )}
             </div>
           )}
 

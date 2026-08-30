@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
 import { sanitizeText, sanitizeUrl } from "../lib/security.js";
+import { addNotification } from "./notificationsService.js";
 
 const LOCAL_APPS_KEY = "nexora_local_apps_v1";
 
@@ -45,7 +46,37 @@ function isValidUuid(id) {
   return typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 }
 
+const APPS_CACHE_TTL_MS = 30 * 1000; // 30 seconds
+const userAppsCache = new Map();
+const employerCandidatesCache = new Map();
+
+export function clearApplicationsCache() {
+  userAppsCache.clear();
+  employerCandidatesCache.clear();
+}
+
 export async function getUserApplications(userId) {
+  const cacheKey = String(userId || "guest");
+  const cached = userAppsCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < APPS_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  if (cached) {
+    getUserApplicationsRaw(userId).then((fresh) => {
+      userAppsCache.set(cacheKey, { data: fresh, timestamp: Date.now() });
+    }).catch(() => {});
+    return cached.data;
+  }
+
+  const data = await getUserApplicationsRaw(userId);
+  userAppsCache.set(cacheKey, { data, timestamp: now });
+  return data;
+}
+
+async function getUserApplicationsRaw(userId) {
   if (isSupabaseConfigured && isValidUuid(userId)) {
     try {
       const { data, error } = await supabase
@@ -116,11 +147,23 @@ export async function submitApplication({ jobId, jobTitle, company, applicantId,
       .maybeSingle();
 
     if (error) throw error;
+    clearApplicationsCache();
+
+    if (applicantId) {
+      addNotification({
+        userId: applicantId,
+        type: "application",
+        title: `Lamaran Terkirim: ${jobTitle || "Lowongan"}`,
+        message: `Lamaran Anda untuk posisi ${jobTitle} di ${company} berhasil dikirim.`,
+        link: "/applications",
+      }).catch(() => {});
+    }
+
     return data;
   }
 
   // Local fallback
-  const newApp = {
+  const newJobApp = {
     id: `app-${Date.now()}`,
     jobId: String(jobId),
     title: jobTitle || "Role Vacancy",
@@ -139,12 +182,45 @@ export async function submitApplication({ jobId, jobTitle, company, applicantId,
     if (applicantId && a.applicantId && a.applicantId !== applicantId) return true;
     return String(a.jobId) !== String(jobId);
   });
-  const next = [newApp, ...filtered];
+  const next = [newJobApp, ...filtered];
   saveLocalApps(next);
-  return newApp;
+  clearApplicationsCache();
+
+  if (applicantId) {
+    addNotification({
+      userId: applicantId,
+      type: "application",
+      title: `Lamaran Terkirim: ${jobTitle || "Lowongan"}`,
+      message: `Lamaran Anda untuk posisi ${jobTitle} di ${company} berhasil dikirim.`,
+      link: "/applications",
+    }).catch(() => {});
+  }
+
+  return newJobApp;
 }
 
 export async function getEmployerCandidates(employerId) {
+  const cacheKey = String(employerId || "guest-employer");
+  const cached = employerCandidatesCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.timestamp < APPS_CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  if (cached) {
+    getEmployerCandidatesRaw(employerId).then((fresh) => {
+      employerCandidatesCache.set(cacheKey, { data: fresh, timestamp: Date.now() });
+    }).catch(() => {});
+    return cached.data;
+  }
+
+  const data = await getEmployerCandidatesRaw(employerId);
+  employerCandidatesCache.set(cacheKey, { data, timestamp: now });
+  return data;
+}
+
+async function getEmployerCandidatesRaw(employerId) {
   if (isSupabaseConfigured && isValidUuid(employerId)) {
     try {
       const { data, error } = await supabase
@@ -222,19 +298,44 @@ export async function updateCandidateStatus(applicationId, newStatus) {
     throw new Error("Invalid application status.");
   }
 
+  clearApplicationsCache();
+
   if (isSupabaseConfigured && isValidUuid(applicationId)) {
-    const { error } = await supabase
+    const { data: appData, error } = await supabase
       .from("applications")
       .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq("id", applicationId);
+      .eq("id", applicationId)
+      .select("applicant_id, jobs(title, company)")
+      .maybeSingle();
 
     if (error) throw error;
+
+    if (appData?.applicant_id) {
+      const jobTitle = appData.jobs?.title || "pekerjaan";
+      const company = appData.jobs?.company || "Perusahaan";
+      const notifType = newStatus === "Interview" ? "interview" : newStatus === "Accepted" ? "application" : "status";
+      addNotification({
+        userId: appData.applicant_id,
+        type: notifType,
+        title: `Status Diperbarui: ${jobTitle}`,
+        message: `Lamaran Anda di ${company} telah diperbarui ke status: "${newStatus}".`,
+        link: "/applications",
+      }).catch(() => {});
+    }
+
     return true;
   }
 
   const current = loadLocalApps();
+  let targetApplicantId = null;
+  let targetTitle = "Lowongan";
+  let targetCompany = "Perusahaan";
+
   const next = current.map((a) => {
     if (String(a.id) === String(applicationId)) {
+      targetApplicantId = a.applicantId;
+      targetTitle = a.title || "Lowongan";
+      targetCompany = a.company || "Perusahaan";
       const timeline = Array.isArray(a.timeline) ? [...a.timeline] : [];
       timeline.push({
         label: `Status updated to ${newStatus}`,
@@ -245,5 +346,17 @@ export async function updateCandidateStatus(applicationId, newStatus) {
     return a;
   });
   saveLocalApps(next);
+
+  if (targetApplicantId) {
+    const notifType = newStatus === "Interview" ? "interview" : newStatus === "Accepted" ? "application" : "status";
+    addNotification({
+      userId: targetApplicantId,
+      type: notifType,
+      title: `Status Diperbarui: ${targetTitle}`,
+      message: `Lamaran Anda di ${targetCompany} telah diperbarui ke status: "${newStatus}".`,
+      link: "/applications",
+    }).catch(() => {});
+  }
+
   return true;
 }

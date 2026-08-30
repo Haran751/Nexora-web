@@ -3,8 +3,10 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
 
-// Route-level code splitting to optimize initial bundle size & load times
-const LandingPage = lazy(() => import("./pages/LandingPage.jsx"));
+// Statically import LandingPage so root route renders immediately without lazy-load waterfall
+import LandingPage from "./pages/LandingPage.jsx";
+
+// Secondary routes remain lazily loaded on-demand
 const HomePage = lazy(() => import("./pages/HomePage.jsx"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage.jsx"));
 const LoginPage = lazy(() => import("./pages/LoginPage.jsx"));

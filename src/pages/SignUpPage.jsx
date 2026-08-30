@@ -160,7 +160,10 @@ export default function SignUpPage() {
           </button>
           <button className="role-card role-card--employer" onClick={() => { setAuthError(""); setStage("employer"); }}>
             <span className="role-card__ico">
-              <img src="/for-employer.png" alt="For Employers" width="44" height="44" loading="lazy" decoding="async" />
+              <picture>
+                <source srcSet="/for-employer.webp" type="image/webp" />
+                <img src="/for-employer.png" alt="For Employers" width="44" height="44" loading="lazy" decoding="async" />
+              </picture>
             </span>
             <h3>For Employers</h3>
             <p>Hire great talent, effortlessly.</p>
