@@ -205,9 +205,6 @@ export default function Navbar({ variant = "app", onEmployerView }) {
           {v}
         </button>
       ))}
-      <NavLink to="/jobs" className="navbar__link" style={{ marginLeft: 12 }}>
-        Browse Jobs
-      </NavLink>
     </>
   );
 
@@ -290,9 +287,6 @@ export default function Navbar({ variant = "app", onEmployerView }) {
                 >
                   Candidates
                 </button>
-                <NavLink to="/jobs" className="navbar__drawer-link" onClick={closeMenu}>
-                  Browse Jobs
-                </NavLink>
                 <button
                   onClick={() => {
                     closeMenu();
@@ -404,7 +398,7 @@ export default function Navbar({ variant = "app", onEmployerView }) {
                 title="Log Out"
                 style={{ opacity: 0.8, fontSize: "0.85rem", padding: "4px 8px" }}
               >
-                Exit
+                Logout
               </button>
             </div>
           ) : (

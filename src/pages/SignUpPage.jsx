@@ -126,7 +126,13 @@ export default function SignUpPage() {
         </Link>
       </div>
 
-      <HeroArt width={767} height={633} className="signup__art-bg" />
+      {/* Sharp vector ambient background effects */}
+      <div className="signup__bg-art" aria-hidden="true">
+        <div className="signup__bg-glow signup__bg-glow--1" />
+        <div className="signup__bg-glow signup__bg-glow--2" />
+        <div className="signup__bg-glow signup__bg-glow--3" />
+      </div>
+
       <h1 className="signup__title">Get Started with Nexora</h1>
       <p className="signup__sub">Choose how you want to join the Nexora community.</p>
 
@@ -249,7 +255,7 @@ export default function SignUpPage() {
           </button>
           <form className="signup-form signup-form--employer" onSubmit={handleEmployerSubmit} noValidate>
             <h3>Employer Sign Up</h3>
-            <p className="signup__sub" style={{ textAlign: "left", margin: "0 0 8px" }}>Register your company</p>
+            <p className="signup-form__sub" style={{ textAlign: "left", margin: "0 0 10px" }}>Register your company</p>
 
             <div className="field">
               <label htmlFor="e-company">Company Name</label>

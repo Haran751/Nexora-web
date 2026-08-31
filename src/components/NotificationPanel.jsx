@@ -70,10 +70,10 @@ export default function NotificationPanel({
                   <span
                     style={{
                       fontSize: "12px",
-                      color: "rgba(61, 16, 40, 0.7)",
+                      color: "rgba(255, 255, 255, 0.82)",
                       display: "block",
                       marginTop: "2px",
-                      lineHeight: "1.3",
+                      lineHeight: "1.35",
                     }}
                   >
                     {n.message}
@@ -85,7 +85,7 @@ export default function NotificationPanel({
           ))}
         </ul>
       ) : (
-        <div style={{ padding: "28px 16px", textAlign: "center", color: "rgba(61,16,40,0.6)", fontSize: "13px" }}>
+        <div style={{ padding: "28px 16px", textAlign: "center", color: "rgba(255, 255, 255, 0.75)", fontSize: "13px" }}>
           Belum ada notifikasi untuk akun Anda.
         </div>
       )}

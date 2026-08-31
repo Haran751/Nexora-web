@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
+import useScrollReveal from "../hooks/useScrollReveal.js";
 import { fetchJobById } from "../services/jobsService.js";
 import { submitApplication } from "../services/applicationsService.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -21,6 +22,7 @@ export default function JobDetailPage() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  const revealRef = useScrollReveal([job]);
 
   useEffect(() => {
     let active = true;
@@ -98,7 +100,7 @@ export default function JobDetailPage() {
   return (
     <div className="page">
       <Navbar />
-      <main className="page__body job-detail">
+      <main className="page__body job-detail" ref={revealRef}>
         <div className="jd-header">
           <strong>{job.title}</strong>
           <Link to="/jobs" className="view-job">

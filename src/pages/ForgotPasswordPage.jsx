@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import OtpInput from "../components/OtpInput.jsx";
+import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const gradient = "linear-gradient(90deg, #ad4359 0%, #ab4259 30%, #ad4359 55%, #4d194b 100%)";
@@ -8,6 +9,7 @@ const gradient = "linear-gradient(90deg, #ad4359 0%, #ab4259 30%, #ad4359 55%, #
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
   const { resetPasswordForEmail, verifyOtp, updateUserPassword, resendOtp } = useAuth();
+  const revealRef = useScrollReveal();
 
   const [step, setStep] = useState("email"); // 'email' | 'otp' | 'success'
   const [email, setEmail] = useState("");
@@ -102,7 +104,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="forgot">
+    <div className="forgot" ref={revealRef}>
       <header className="forgot__navbar">
         <Link to="/login" className="forgot__navbar-brand">
           <img src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" loading="lazy" decoding="async" />

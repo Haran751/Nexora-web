@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
+import useScrollReveal from "../hooks/useScrollReveal.js";
 import { loadProfile } from "../lib/profile.js";
 import { sanitizeUrl } from "../lib/security.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -283,6 +284,7 @@ export default function CVGeneratorPage() {
   const [template, setTemplate] = useState("Classic");
   const { profile: authProfile } = useAuth();
   const profile = authProfile?.name ? authProfile : loadProfile();
+  const revealRef = useScrollReveal();
 
   const isProfileEmpty =
     (!profile.skills || profile.skills.length === 0) &&
@@ -303,7 +305,7 @@ export default function CVGeneratorPage() {
   return (
     <div className="page">
       <Navbar />
-      <main className="page__body cv">
+      <main className="page__body cv" ref={revealRef}>
         <div className="jd-header">
           <h2 className="saved__title">CV Generator</h2>
           <span>Rendered live from your profile</span>

@@ -52,7 +52,13 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      <HeroArt width={767} height={633} className="signup__art-bg" />
+      {/* Sharp vector ambient background effects */}
+      <div className="signup__bg-art" aria-hidden="true">
+        <div className="signup__bg-glow signup__bg-glow--1" />
+        <div className="signup__bg-glow signup__bg-glow--2" />
+        <div className="signup__bg-glow signup__bg-glow--3" />
+      </div>
+
       <h1 className="signup__title">Welcome Back</h1>
       <p className="signup__sub">Log in to your Nexora account</p>
 
