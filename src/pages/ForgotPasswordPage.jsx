@@ -51,12 +51,12 @@ export default function ForgotPasswordPage() {
     setAuthError("");
     setSubmitting(true);
     try {
-      await verifyOtp({
+      const res = await verifyOtp({
         email: email.trim(),
         token,
         type: "recovery",
       });
-      setVerifiedToken(token);
+      setVerifiedToken(res?.resetToken || token);
       setAuthError("");
     } catch (err) {
       setAuthError(err.message || "Invalid or expired recovery code.");
@@ -80,8 +80,8 @@ export default function ForgotPasswordPage() {
     setPasswordError("");
     setAuthError("");
 
-    if (!newPassword || newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters.");
+    if (!newPassword || newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(true);
     try {
-      await updateUserPassword({ email: email.trim(), newPassword });
+      await updateUserPassword({ email: email.trim(), newPassword, resetToken: verifiedToken });
       setStep("success");
     } catch (err) {
       setAuthError(err.message || "Failed to update password. Please try again.");

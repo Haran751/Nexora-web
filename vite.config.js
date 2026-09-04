@@ -2,10 +2,54 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import nodemailer from "nodemailer";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OTP_REGEX = /^\d{6}$/;
+
+function escapeHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[m]));
+}
+
+const rateLimitMap = new Map();
+
+function checkRateLimit(key, maxRequests = 5, windowMs = 10 * 60 * 1000) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key) || { count: 0, resetAt: now + windowMs };
+
+  if (now > entry.resetAt) {
+    entry.count = 1;
+    entry.resetAt = now + windowMs;
+    rateLimitMap.set(key, entry);
+    return { allowed: true, remaining: maxRequests - 1 };
+  }
+
+  if (entry.count >= maxRequests) {
+    const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
+    return { allowed: false, retryAfterSeconds };
+  }
+
+  entry.count += 1;
+  rateLimitMap.set(key, entry);
+  return { allowed: true, remaining: maxRequests - entry.count };
+}
+
 function smtpApiPlugin(env) {
   return {
     name: "smtp-api-dev-server",
     configureServer(server) {
+      // Security headers middleware
+      server.middlewares.use((req, res, next) => {
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("X-Frame-Options", "SAMEORIGIN");
+        res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+        next();
+      });
+
       server.middlewares.use("/api/send-otp", async (req, res) => {
         if (req.method !== "POST") {
           res.statusCode = 405;
@@ -29,16 +73,44 @@ function smtpApiPlugin(env) {
 
           const { to_email, to_name = "User", otp_code, type = "signup" } = body;
 
+          res.setHeader("Content-Type", "application/json");
+
+          if (!to_email || !EMAIL_REGEX.test(to_email)) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Valid to_email address is required" }));
+            return;
+          }
+
+          if (!otp_code || !OTP_REGEX.test(String(otp_code))) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Invalid otp_code format. Must be a 6-digit number." }));
+            return;
+          }
+
+          // Rate Limiting (max 5 requests per 10 minutes)
+          const clientIp = req.socket?.remoteAddress || "local";
+          const rateLimitKey = `dev_otp_${clientIp}_${to_email.toLowerCase()}`;
+          const rateCheck = checkRateLimit(rateLimitKey, 5, 10 * 60 * 1000);
+
+          if (!rateCheck.allowed) {
+            res.statusCode = 429;
+            res.setHeader("Retry-After", String(rateCheck.retryAfterSeconds));
+            res.end(JSON.stringify({
+              error: `Terlalu banyak permintaan OTP. Silakan tunggu ${rateCheck.retryAfterSeconds} detik.`,
+            }));
+            return;
+          }
+
+          const safeName = escapeHtml(String(to_name).slice(0, 100));
+
           const gmailUser = env.GMAIL_USER?.trim() || process.env.GMAIL_USER?.trim();
           const gmailPass = env.GMAIL_APP_PASSWORD?.trim() || process.env.GMAIL_APP_PASSWORD?.trim();
-
-          res.setHeader("Content-Type", "application/json");
 
           if (!gmailUser || !gmailPass) {
             console.log(`\n\x1b[33m[DEMO SMTP]\x1b[0m Email tujuan: \x1b[36m${to_email}\x1b[0m | Kode OTP: \x1b[32m${otp_code}\x1b[0m`);
             console.log(`\x1b[90m(Tips: Tambahkan GMAIL_USER dan GMAIL_APP_PASSWORD di .env agar email benar-benar masuk ke inbox Gmail)\x1b[0m\n`);
             res.statusCode = 200;
-            res.end(JSON.stringify({ success: true, demo: true, otp_code }));
+            res.end(JSON.stringify({ success: true, demo: true, message: "Demo mode: Email printed to server console." }));
             return;
           }
 
@@ -130,15 +202,49 @@ function smtpApiPlugin(env) {
             body = {};
           }
 
-          const { email, newPassword } = body;
+          const { email, newPassword, resetToken } = body;
+
+          // Input Validation
+          if (!email || !EMAIL_REGEX.test(email)) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Valid email address is required" }));
+            return;
+          }
+
+          if (!newPassword || typeof newPassword !== "string" || newPassword.length < 8 || newPassword.length > 128) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: "Password must be between 8 and 128 characters" }));
+            return;
+          }
+
+          if (!resetToken || typeof resetToken !== "string" || !resetToken.startsWith("rst_")) {
+            res.statusCode = 401;
+            res.end(JSON.stringify({ error: "Invalid or missing OTP verification token. Please verify OTP first." }));
+            return;
+          }
+
+          // Rate Limiting (max 5 attempts per 15 minutes)
+          const clientIp = req.socket?.remoteAddress || "local";
+          const rateLimitKey = `dev_pwd_${clientIp}_${email.toLowerCase()}`;
+          const rateCheck = checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000);
+
+          if (!rateCheck.allowed) {
+            res.statusCode = 429;
+            res.setHeader("Retry-After", String(rateCheck.retryAfterSeconds));
+            res.end(JSON.stringify({
+              error: `Terlalu banyak percobaan reset password. Silakan tunggu ${rateCheck.retryAfterSeconds} detik.`,
+            }));
+            return;
+          }
+
           const supabaseUrl = env.VITE_SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim();
           const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || env.VITE_SUPABASE_ANON_KEY?.trim() || process.env.VITE_SUPABASE_ANON_KEY?.trim();
 
           res.setHeader("Content-Type", "application/json");
 
-          if (!supabaseUrl || !serviceKey || !email || !newPassword) {
+          if (!supabaseUrl || !serviceKey) {
             res.statusCode = 200;
-            res.end(JSON.stringify({ success: true, demo: true }));
+            res.end(JSON.stringify({ success: true, demo: true, message: "Demo mode password updated" }));
             return;
           }
 
@@ -201,6 +307,26 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       open: true,
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules")) {
+              if (id.includes("react") || id.includes("react-dom") || id.includes("react-router-dom")) {
+                return "vendor-react";
+              }
+              if (id.includes("@supabase")) {
+                return "vendor-supabase";
+              }
+              if (id.includes("@emailjs")) {
+                return "vendor-email";
+              }
+            }
+          },
+        },
+      },
+      chunkSizeWarningLimit: 600,
     },
   };
 });

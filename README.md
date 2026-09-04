@@ -25,10 +25,7 @@
 ## 📋 Daftar Isi
 
 - [Tentang Proyek](#-tentang-proyek)
-  - [Latar Belakang](#latar-belakang)
-  - [Solusi yang Ditawarkan](#solusi-yang-ditawarkan)
-  - [Tujuan Proyek](#tujuan-proyek)
-  - [Keselarasan dengan SDGs](#-keselarasan-dengan-sdgs-sustainable-development-goals)
+- [Keselarasan dengan SDGs](#-keselarasan-dengan-sdgs-sustainable-development-goals)
 - [Fitur Unggulan](#-fitur-unggulan)
 - [Demo & Screenshot](#-demo--screenshot)
 - [Teknologi](#-teknologi)
@@ -46,19 +43,20 @@
 
 | Nama | Peran | GitHub |
 |------|-------|--------|
-| **Hasbi Imran (Haran751)** | Project Lead & Full Stack Developer | [GitHub](https://github.com/Haran751) |
-| **Nexora Frontend Team** | Frontend Developer | [GitHub](https://github.com/Haran751/Nexora-web) |
-| **Nexora Backend Team** | Backend Developer | [GitHub](https://github.com/Haran751/Nexora-web) |
-| **Nexora Design Team** | UI/UX Designer | [GitHub](https://github.com/Haran751/Nexora-web) |
+| **Hasbi Imran** | Frontend Developer | [GitHub](https://github.com/Haran751) |
+| **Ahmad Putra Ramadhan** | Backend Developer | [GitHub](https://github.com/AhmadPR) |
+| **Frazier Beltsazar Tarigan** | UI/UX Designer | [GitHub](https://github.com/FrazierBT) |
 
 ---
 
 ## 🎯 Tentang Proyek
 
 ### Latar Belakang
+
 Tantangan ketenagakerjaan di era digital semakin kompetitif. Banyak pencari kerja (khususnya fresh graduates dan profesional muda) menghadapi kesulitan dalam melacak status lamaran yang seringkali tidak transparan (*ghosting* recruiter). Selain itu, proses pembuatan curriculum vitae (CV) seringkali memerlukan software terpisah atau layanan berbayar. Di sisi lain, recruiter/employer UMKM kerap kesulitan menyaring dan mengelola kandidat tanpa sistem ATS (*Applicant Tracking System*) yang mahal.
 
 ### Solusi yang Ditawarkan
+
 Nexora menawarkan solusi ekosistem karir terpadu dua sisi (Worker & Employer):
 1. **Job Marketplace dengan Match Scoring**: Memudahkan pencari kerja menemukan lowongan dengan kalkulasi skor kecocokan profil secara instan.
 2. **Real-time Application Tracker**: Memberikan kepastian status tahapan seleksi kerja (*Applied, Review, Interview, Accepted, Rejected*).
@@ -67,19 +65,31 @@ Nexora menawarkan solusi ekosistem karir terpadu dua sisi (Worker & Employer):
 5. **Free Cloud Profile Storage**: Upload foto profil teroptimasi menggunakan kompresi browser Canvas dan penyimpanan Supabase Storage.
 
 ### Tujuan Proyek
+
 - 🎯 **Tujuan Utama**: Membangun platform rekrutmen inklusif dan transparan yang mengintegrasikan pencarian kerja, ATS tracking, dan CV builder dalam satu wadah.
 - 📊 **Target Pengguna**: Pencari kerja (fresh graduate, profesional, freelancer) dan penyedia kerja (recruiter, UMKM, startup, corporate employer).
 - 💡 **Value Proposition**: Platform karir gratis berfitur lengkap yang menghilangkan friksi pembuatan CV, memberikan transparansi proses lamaran, dan mempermudah perusahaan mengelola pelamar.
 
-### 🌐 Keselarasan dengan SDGs (Sustainable Development Goals)
+---
 
-Nexora berkomitmen mendukung agenda **PBB 2030** dengan berkontribusi langsung pada pencapaian Tujuan Pembangunan Berkelanjutan:
+## 🌍 Keselarasan dengan SDGs (Sustainable Development Goals)
 
-| SDG | Target Spesifik | Kontribusi Nyata Nexora |
-| :--- | :--- | :--- |
-| **SDG 8: Decent Work and Economic Growth** <br> *(Pilar Utama)* | **Target 8.5 & 8.6**: Memperluas kesempatan kerja produktif, layak, dan memangkas pengangguran usia muda (*NEET*). <br>**Target 8.3**: Mendorong pertumbuhan formalisasi UMKM. | Fitur **Smart Job Discovery** dan **Easy Apply** 1-klik membuka akses bursa kerja transparan bagi fresh graduate. **Employer Dashboard** gratis membantu UMKM merekrut talenta tanpa biaya software ATS mahal. |
-| **SDG 4: Quality Education** <br> *(Pilar Pendukung)* | **Target 4.4**: Meningkatkan keterampilan relevan bagi pemuda untuk ketenagakerjaan dan pekerjaan yang layak. | **Instant CV Generator** (3 template ATS-friendly) mengedukasi kandidat menyusun portofolio profesional secara gratis, dilengkapi **Match Score** untuk memetakan kesiapan skill pelamar terhadap standar industri. |
-| **SDG 10: Reduced Inequalities** <br> *(Pilar Pendukung)* | **Target 10.2**: Mendorong inklusi sosial dan ekonomi yang setara tanpa diskriminasi dalam akses pekerjaan. | **Application Tracker** menghadirkan transparansi penuh di setiap tahapan seleksi kerja, menghilangkan asimetri informasi dan praktik *ghosting* recruiter bagi seluruh pelamar. |
+Sebagai bentuk respon terhadap tantangan global, **Nexora** dirancang dengan mengintegrasikan nilai-nilai **Sustainable Development Goals (SDGs)**, secara khusus berfokus pada:
+
+### 1. SDG 8: Decent Work and Economic Growth (Pekerjaan Layak dan Pertumbuhan Ekonomi)
+**Target 8.5 & 8.6**: Memperluas kesempatan kerja produktif, layak, dan memangkas pengangguran usia muda (*NEET*). **Target 8.3**: Mendorong pertumbuhan formalisasi UMKM.
+
+* **Kontribusi Proyek:** Fitur **Smart Job Discovery** dan kemudahan melamar dalam satu klik (Easy Apply) memperluas akses pencari kerja, khususnya fresh graduates, ke berbagai peluang kerja secara adil. Selain itu, **Employer Dashboard** yang gratis mempermudah UMKM untuk menemukan talenta yang tepat tanpa harus berlangganan sistem ATS mahal, sehingga mendorong formalisasi dan pertumbuhan ekonomi UMKM.
+
+### 2. SDG 4: Quality Education (Pendidikan Berkualitas)
+**Target 4.4**: Meningkatkan keterampilan relevan bagi pemuda untuk ketenagakerjaan dan pekerjaan yang layak.
+
+* **Kontribusi Proyek:** Melalui **Instant CV Generator** yang sudah ramah ATS, platform ini mengedukasi pelamar tentang cara merangkum pengalaman, pendidikan, dan sertifikasi mereka ke dalam format standar industri. Pengguna juga dibantu dengan indikator kecocokan (**Match Scoring**) untuk mengidentifikasi keterampilan yang dibutuhkan pasar.
+
+### 3. SDG 10: Reduced Inequalities (Berkurangnya Kesenjangan)
+**Target 10.2**: Mendorong inklusi sosial dan ekonomi yang setara tanpa diskriminasi dalam akses pekerjaan.
+
+* **Kontribusi Proyek:** Sistem **Application Pipeline Tracker** menghilangkan asimetri informasi yang selama ini merugikan kandidat. Dengan pemantauan status lamaran yang transparan, praktik *ghosting* oleh recruiter dapat ditekan dan penilaian berbasis pada kompetensi alih-alih subjektivitas.
 
 ---
 
@@ -98,6 +108,7 @@ Nexora berkomitmen mendukung agenda **PBB 2030** dengan berkontribusi langsung p
 | **Cloud Profile & Avatar Upload** | Penggantian foto profil dengan modal preview, kompresi Canvas otomatis, dan Supabase Storage. | Sangat ringan, hemat kuota cloud, dan memiliki fallback lokal dataURL. |
 
 ### Fitur Tambahan
+
 - **Saved Jobs (Bookmark)** - Menyimpan lowongan favorit untuk ditinjau atau dilamar sewaktu-waktu.
 - **Scroll Reveal Animations** - Animasi transisi halaman modern berbasis IntersectionObserver.
 - **Activity Tracker Chart** - Visualisasi grafik aktivitas pencarian karir di halaman profil.
@@ -108,7 +119,8 @@ Nexora berkomitmen mendukung agenda **PBB 2030** dengan berkontribusi langsung p
 ## 📸 Demo & Screenshot
 
 ### Live Demo
-🔗 **[Kunjungi Repository Nexora](https://github.com/Haran751/Nexora-web)**  
+
+🔗 **[Kunjungi Repository Nexora](https://github.com/Haran751/Nexora-web)**
 🚀 **Akses Lokal**: Jalankan `npm run dev` di `http://localhost:5173`
 
 ### Screenshot Aplikasi
@@ -121,6 +133,7 @@ Nexora berkomitmen mendukung agenda **PBB 2030** dengan berkontribusi langsung p
 </div>
 
 ### Video Demo
+
 📹 **[Link Video Demo Proyek](https://github.com/Haran751/Nexora-web)** _(Tersedia pada lampiran submission ITECHNO CUP 2026)_
 
 ---
@@ -130,7 +143,7 @@ Nexora berkomitmen mendukung agenda **PBB 2030** dengan berkontribusi langsung p
 ### Tech Stack
 
 #### Frontend
-```
+```text
 Framework    : React 18.3.1
 UI Library   : Pure CSS3 (Design Tokens & CSS Variables), Google Fonts (Playfair Display & Inter)
 State Mgmt   : React Context API (AuthContext) & Local Hooks
@@ -139,7 +152,7 @@ Image Engine : HTML5 Canvas API (Client-side Compression)
 ```
 
 #### Backend
-```
+```text
 Runtime      : Node.js (Vite Dev Server Middlewares)
 Framework    : Connect / Express Middlewares
 Database     : PostgreSQL 15 (Supabase Cloud Database)
@@ -150,7 +163,7 @@ Storage      : Supabase Storage (Bucket 'avatars')
 ```
 
 #### DevOps & Tools
-```
+```text
 Build Tool   : Vite 6.0.5
 Deployment   : Localhost (Port 5173) / Ready for Vercel, Netlify, or GitHub Pages
 CI/CD        : Git & GitHub Version Control
@@ -281,42 +294,15 @@ erDiagram
 
 ### Folder Structure
 
-```
+```text
 Nexora-web/
 ├── public/                     # Aset publik statis (logo-nexora.webp, ilustrasi)
 ├── src/
 │   ├── components/             # Reusable UI Components
-│   │   ├── AvatarUploadModal.jsx # Modal upload, preview, dan kompresi foto profil
-│   │   ├── Navbar.jsx          # Navigasi responsif (Landing, Worker, Employer)
-│   │   ├── Footer.jsx          # Komponen footer global
-│   │   ├── OtpInput.jsx        # Input 6-digit OTP interaktif
-│   │   ├── NotificationPanel.jsx # Dropdown notifikasi lamaran & akun
-│   │   ├── CtaButton.jsx       # Tombol aksen utama (cta-btn)
-│   │   └── HeroArt.jsx         # Ilustrasi branding Nexora (767x633px)
-│   ├── context/
-│   │   └── AuthContext.jsx     # Global authentication, profile sync, dan status role
-│   ├── hooks/
-│   │   └── useScrollReveal.js  # Animasi interaktif saat scroll (IntersectionObserver)
-│   ├── lib/
-│   │   ├── avatarUpload.js     # Helper kompresi Canvas dan upload Supabase Storage
-│   │   ├── jobsData.js         # Initial mock lowongan kerja & seed data
-│   │   ├── profile.js          # Utilitas kalkulasi persentase & profil
-│   │   ├── savedJobs.js        # Utilitas bookmark lowongan pengguna
-│   │   ├── sendOtp.js          # Integrasi pengiriman OTP via SMTP/EmailJS
-│   │   └── supabase.js         # Inisialisasi Supabase client & konfigurasi
-│   ├── pages/                  # Halaman aplikasi
-│   │   ├── HomePage.jsx        # Dashboard utama pencari kerja
-│   │   ├── LandingPage.jsx     # Landing page publik & perkenalan produk
-│   │   ├── LoginPage.jsx       # Halaman login akun
-│   │   ├── SignUpPage.jsx      # Halaman pendaftaran (Worker/Employer) + verifikasi OTP
-│   │   ├── ForgotPasswordPage.jsx # Reset password dengan kode verifikasi OTP email
-│   │   ├── JobDiscoveryPage.jsx# Eksplorasi lowongan kerja + multi-filter
-│   │   ├── JobDetailPage.jsx   # Rincian lowongan + Match Score + modal Easy Apply
-│   │   ├── ApplicationsPage.jsx# Tracker progres lamaran & timeline status
-│   │   ├── ProfilePage.jsx     # Manajemen profil pengguna, avatar, & chart aktivitas
-│   │   ├── CVGeneratorPage.jsx # Generator CV instan 3 template (Classic/Modern/Minimal)
-│   │   ├── SavedJobsPage.jsx   # Daftar lowongan yang dibookmark pengguna
-│   │   └── EmployerDashboardPage.jsx # Dashboard perusahaan, posting job, & kelola kandidat
+│   ├── context/                # Global authentication, profile sync, dan status role
+│   ├── hooks/                  # Animasi interaktif saat scroll (IntersectionObserver)
+│   ├── lib/                    # Helper kompresi Canvas dan upload Supabase Storage, data mock
+│   ├── pages/                  # Halaman aplikasi (Home, Profile, CV Generator, dll)
 │   ├── App.jsx                 # Route registry & navigasi (HashRouter)
 │   ├── index.css               # Design system, CSS variables, & styling terpadu
 │   └── main.jsx                # Entry point aplikasi React
@@ -333,6 +319,7 @@ Nexora-web/
 ## ⚙️ Instalasi & Setup
 
 ### Prerequisites
+
 Pastikan Anda telah menginstall:
 - **Node.js** (v18.x atau lebih tinggi)
 - **npm** / **yarn** / **pnpm**
@@ -350,26 +337,19 @@ cd Nexora-web
 #### 2️⃣ Install Dependencies
 
 ```bash
-# Menggunakan npm
 npm install
-
-# Atau menggunakan yarn
-yarn install
-
-# Atau menggunakan pnpm
-pnpm install
 ```
 
 #### 3️⃣ Setup Environment Variables
 
-Buat file `.env` di root directory (atau langsung salin dari `.env.example`). Konfigurasi siap pakai berikut telah disediakan agar Dewan Juri dapat langsung menguji seluruh fitur secara live (Supabase Cloud Database & pengiriman email OTP asli):
+Buat file `.env` di root directory:
 
 ```env
 # Supabase Configuration (Cloud Database & Storage Nexora)
 VITE_SUPABASE_URL=https://lxavjgeeghymrwauchvy.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4YXZqZ2VlZ2h5bXJ3YXVjaHZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5ODY4OTIsImV4cCI6MjEwMzU2Mjg5Mn0.zBeoMuRnN9OUOoP4tRmxO-zivew03bjj9QenP4PM-4A
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# Gmail SMTP Configuration (Pengiriman OTP Pendaftaran & Reset Password Otomatis Masuk ke Inbox)
+# Gmail SMTP Configuration (Pengiriman OTP)
 GMAIL_USER=nexoracompany08@gmail.com
 GMAIL_APP_PASSWORD=kyhi ghzn cbov qzle
 
@@ -378,15 +358,10 @@ NODE_ENV=development
 PORT=5173
 ```
 
-> 💡 **Kemudahan untuk Penguji / Juri:** Cukup salin isi di atas ke file `.env`, lalu langsung jalankan `npm run dev`. Database Supabase dan pengiriman OTP Gmail sudah aktif dan siap dicoba!
-
 #### 4️⃣ Setup Database
 
-```bash
-# Jalankan skrip skema di SQL Editor Supabase:
-# Salin dan eksekusi file: supabase/schema.sql
-# Dan buat public bucket di Supabase Storage bernama: avatars
-```
+Jalankan skrip skema di SQL Editor Supabase.
+Salin dan eksekusi file: `supabase/schema.sql` dan buat public bucket di Supabase Storage bernama: `avatars`.
 
 #### 5️⃣ Run Development Server
 
@@ -434,7 +409,7 @@ npm run preview
 
 ### Base URL
 
-```
+```text
 Development: http://localhost:5173/api
 Production:  https://[domain]/api
 ```
@@ -494,7 +469,7 @@ npm run preview
 
 ### Test Coverage
 
-```
+```text
 Statements   : 100% (Semua komponen halaman teruji render tanpa circular loop)
 Branches     : 95%  (Dukungan ganda mode Cloud Supabase & mode lokal fallback)
 Functions    : 100% (Auth, OTP, Easy Apply, Match Score, CV Builder, Avatar Compressor)

@@ -50,8 +50,8 @@ export default function JobDetailPage() {
         jobTitle: job.title,
         company: job.company,
         applicantId: user?.id,
-        applicantName: profile.name,
-        coverNote: profile.about,
+        applicantName: profile?.name || user?.email?.split("@")[0] || "Applicant",
+        coverNote: profile?.about || "",
       });
       setSent(true);
     } catch (err) {
@@ -92,7 +92,7 @@ export default function JobDetailPage() {
   }
 
   const tags = job.tags || [job.location, job.workMode, job.salary, job.posted];
-  const maxSkills = profile.skills?.length ? profile.skills.slice(0, 5) : ["—"];
+  const maxSkills = profile?.skills?.length ? profile.skills.slice(0, 5) : ["-"];
   const breakdown = job.matchBreakdown || { skills: 90, location: 95, experience: 85, workMode: 90 };
 
   return (

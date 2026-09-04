@@ -7,12 +7,20 @@ const AuthContext = createContext(null);
 
 const DEMO_USER_KEY = "nexora_demo_user_v1";
 const DEMO_OTP_KEY = "nexora_demo_otps_v1";
+const RESET_TOKEN_KEY = "nexora_reset_token_v1";
 
 function getStoredOtp(email) {
   try {
     const raw = sessionStorage.getItem(DEMO_OTP_KEY);
     const map = raw ? JSON.parse(raw) : {};
-    return map[email.toLowerCase()] || null;
+    const entry = map[email.toLowerCase()];
+    if (!entry) return null;
+    if (typeof entry === "string") return entry;
+    if (entry.expiresAt && Date.now() > entry.expiresAt) {
+      clearStoredOtp(email);
+      return null;
+    }
+    return entry.code;
   } catch {
     return null;
   }
@@ -22,8 +30,60 @@ function setStoredOtp(email, code) {
   try {
     const raw = sessionStorage.getItem(DEMO_OTP_KEY);
     const map = raw ? JSON.parse(raw) : {};
-    map[email.toLowerCase()] = code;
+    // 10 minutes TTL
+    map[email.toLowerCase()] = {
+      code,
+      expiresAt: Date.now() + 10 * 60 * 1000,
+    };
     sessionStorage.setItem(DEMO_OTP_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearStoredOtp(email) {
+  try {
+    const raw = sessionStorage.getItem(DEMO_OTP_KEY);
+    if (!raw) return;
+    const map = JSON.parse(raw);
+    delete map[email.toLowerCase()];
+    sessionStorage.setItem(DEMO_OTP_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
+function setResetToken(email) {
+  try {
+    const token = `rst_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+    sessionStorage.setItem(
+      RESET_TOKEN_KEY,
+      JSON.stringify({ email: email.toLowerCase(), token, expiresAt: Date.now() + 5 * 60 * 1000 })
+    );
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+function getResetToken(email) {
+  try {
+    const raw = sessionStorage.getItem(RESET_TOKEN_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.email !== email.toLowerCase() || Date.now() > data.expiresAt) {
+      sessionStorage.removeItem(RESET_TOKEN_KEY);
+      return null;
+    }
+    return data.token;
+  } catch {
+    return null;
+  }
+}
+
+function clearResetToken() {
+  try {
+    sessionStorage.removeItem(RESET_TOKEN_KEY);
   } catch {
     /* ignore */
   }
@@ -185,10 +245,17 @@ export function AuthProvider({ children }) {
   async function verifyOtp({ email, token, type = "signup" }) {
     const savedCode = getStoredOtp(email);
 
-    // Validasi token cocok dengan kode yang dikirim ke email
-    if (token !== savedCode && token !== "123456") {
+    if (!savedCode) {
+      throw new Error("Kode OTP telah kedaluwarsa atau belum diminta. Silakan minta kode baru.");
+    }
+
+    // Validasi token cocok dengan kode yang dikirim ke email (strict, no bypass)
+    if (token !== savedCode) {
       throw new Error("Kode OTP salah atau tidak cocok. Periksa email Anda.");
     }
+
+    // Hapus kode OTP agar tidak bisa digunakan berulang kali (anti-replay)
+    clearStoredOtp(email);
 
     if (type === "signup") {
       const rawPending = sessionStorage.getItem("nexora_pending_signup");
@@ -236,8 +303,9 @@ export function AuthProvider({ children }) {
       return { user: targetUser };
     }
 
-    // Jika recovery
-    return { success: true };
+    // Jika recovery, buat reset token jangka pendek (5 menit)
+    const resetToken = setResetToken(email);
+    return { success: true, resetToken };
   }
 
   // 3. Resend OTP Code ke Gmail
@@ -277,18 +345,30 @@ export function AuthProvider({ children }) {
   async function updateUserPassword(payload) {
     const newPassword = typeof payload === "string" ? payload : payload?.newPassword;
     const email = typeof payload === "object" ? payload?.email : user?.email;
+    const resetToken = typeof payload === "object" ? payload?.resetToken : null;
 
-    if (!newPassword) throw new Error("Password baru wajib diisi.");
+    if (!newPassword || newPassword.length < 8) {
+      throw new Error("Password baru minimal 8 karakter demi keamanan.");
+    }
 
-    // 1. Coba panggil server endpoint /api/update-password
+    // Validasi reset token jika reset dipanggil di luar session aktif
+    if (!user && email) {
+      const validToken = getResetToken(email);
+      if (!validToken || (resetToken && resetToken !== validToken)) {
+        throw new Error("Sesi verifikasi reset password tidak valid atau telah kedaluwarsa. Silakan verifikasi ulang OTP.");
+      }
+    }
+
+    // 1. Coba panggil server endpoint /api/update-password dengan resetToken
     try {
       const res = await fetch("/api/update-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, newPassword }),
+        body: JSON.stringify({ email, newPassword, resetToken }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        clearResetToken();
         return { success: true };
       }
     } catch (apiErr) {

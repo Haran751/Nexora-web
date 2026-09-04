@@ -20,7 +20,6 @@ export async function sendOtpEmail({ to_email, to_name = "User", otp_code, type 
     return data;
   } catch (err) {
     console.error("sendOtpEmail fetch error:", err);
-    // Fallback darurat agar user tidak terblokir di UI
-    return { success: true, demo: true, otp_code };
+    throw new Error(err.message || "Gagal menghubungi layanan pengiriman email. Silakan coba kembali.");
   }
 }

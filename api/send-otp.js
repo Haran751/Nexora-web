@@ -1,7 +1,44 @@
 import nodemailer from "nodemailer";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OTP_REGEX = /^\d{6}$/;
+
+function escapeHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[m]));
+}
+
+const rateLimitMap = new Map();
+
+function checkRateLimit(key, maxRequests = 5, windowMs = 10 * 60 * 1000) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key) || { count: 0, resetAt: now + windowMs };
+
+  if (now > entry.resetAt) {
+    entry.count = 1;
+    entry.resetAt = now + windowMs;
+    rateLimitMap.set(key, entry);
+    return { allowed: true, remaining: maxRequests - 1 };
+  }
+
+  if (entry.count >= maxRequests) {
+    const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
+    return { allowed: false, retryAfterSeconds };
+  }
+
+  entry.count += 1;
+  rateLimitMap.set(key, entry);
+  return { allowed: true, remaining: maxRequests - entry.count };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -17,9 +54,28 @@ export default async function handler(req, res) {
 
   const { to_email, to_name = "User", otp_code, type = "signup" } = body || {};
 
-  if (!to_email || !otp_code) {
-    return res.status(400).json({ error: "to_email and otp_code are required" });
+  // Input Validation
+  if (!to_email || !EMAIL_REGEX.test(to_email)) {
+    return res.status(400).json({ error: "Valid to_email address is required" });
   }
+
+  if (!otp_code || !OTP_REGEX.test(String(otp_code))) {
+    return res.status(400).json({ error: "Invalid otp_code format. Must be a 6-digit number." });
+  }
+
+  // Rate Limiting (max 5 requests per 10 minutes per IP/email)
+  const clientIp = req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "local";
+  const rateLimitKey = `otp_${clientIp}_${to_email.toLowerCase()}`;
+  const rateCheck = checkRateLimit(rateLimitKey, 5, 10 * 60 * 1000);
+
+  if (!rateCheck.allowed) {
+    res.setHeader("Retry-After", String(rateCheck.retryAfterSeconds));
+    return res.status(429).json({
+      error: `Terlalu banyak permintaan OTP. Silakan tunggu ${rateCheck.retryAfterSeconds} detik sebelum mencoba lagi.`,
+    });
+  }
+
+  const safeName = escapeHtml(to_name.slice(0, 100));
 
   const gmailUser = process.env.GMAIL_USER?.trim();
   const gmailPass = process.env.GMAIL_APP_PASSWORD?.trim();
@@ -30,8 +86,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       demo: true,
-      otp_code,
-      message: "GMAIL_USER atau GMAIL_APP_PASSWORD belum diisi di .env. Kode dicetak di log.",
+      message: "Demo mode: Email printed to server console for testing.",
     });
   }
 
@@ -74,7 +129,7 @@ export default async function handler(req, res) {
             <p style="margin: 6px 0 0; opacity: 0.85; font-size: 14px;">Next-Gen Career & Opportunity Platform</p>
           </div>
           <div class="body">
-            <p class="greeting">Halo, ${to_name}!</p>
+            <p class="greeting">Halo, ${safeName}!</p>
             <p style="line-height: 1.6;">
               ${
                 isSignup

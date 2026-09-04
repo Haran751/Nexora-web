@@ -77,7 +77,10 @@ export default function Navbar({ variant = "app", onEmployerView }) {
       <NavLink to="/jobs" className="navbar__link">
         Find Jobs
       </NavLink>
-      {user ? (
+      <NavLink to="/signup" className="navbar__link">
+        For Employers
+      </NavLink>
+      {user && (
         <>
           <NavLink to="/applications" className="navbar__link">
             Applications
@@ -88,18 +91,6 @@ export default function Navbar({ variant = "app", onEmployerView }) {
             style={{ color: "var(--accent-orange)", fontWeight: 600 }}
           >
             Dashboard
-          </NavLink>
-        </>
-      ) : (
-        <>
-          <NavLink to="/signup" className="navbar__link">
-            For Employers
-          </NavLink>
-          <NavLink to="/login" className="navbar__link">
-            Login
-          </NavLink>
-          <NavLink to="/signup" className="navbar__link">
-            Sign Up
           </NavLink>
         </>
       )}
@@ -128,21 +119,22 @@ export default function Navbar({ variant = "app", onEmployerView }) {
 
   const displayName = profile?.companyName || profile?.name || user?.email?.split("@")[0] || "User";
   const avatarChar = (displayName || "U").trim().charAt(0).toUpperCase();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <header className={`navbar${variant === "landing" ? " navbar--landing" : ""}${scrolled ? " navbar--scrolled" : ""}`}>
-      <Link to={user ? (role === "employer" ? "/employer" : "/home") : "/"} className="navbar__brand">
-        <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" />
-        Nexora
-      </Link>
+      <div className="navbar__inner">
+        <Link to={user ? (role === "employer" ? "/employer" : "/home") : "/"} className="navbar__brand">
+          <img className="navbar__logo" src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" />
+          Nexora
+        </Link>
 
-      <div className="navbar__links-wrap">
-        <nav className="navbar__links">{centerLinks}</nav>
-      </div>
+        <div className="navbar__links-wrap">
+          <nav className="navbar__links">{centerLinks}</nav>
+        </div>
 
-      {(variant !== "landing" || user) && (
         <div className="navbar__right">
-          {variant !== "employer" && (
+          {user && variant !== "employer" && (
             <div className="navbar__bell-wrap">
               <button
                 className="navbar__bell"
@@ -157,14 +149,8 @@ export default function Navbar({ variant = "app", onEmployerView }) {
             </div>
           )}
 
-          <div className="navbar__step">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <i key={i} />
-            ))}
-          </div>
-
           {user ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className="navbar__user-group">
               <Link to="/profile" className="navbar__user">
                 <span className="navbar__avatar">
                   {profile?.avatarUrl ? (
@@ -173,7 +159,7 @@ export default function Navbar({ variant = "app", onEmployerView }) {
                     avatarChar
                   )}
                 </span>
-                <span style={{ maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span className="navbar__user-name">
                   {displayName}
                 </span>
               </Link>
@@ -187,15 +173,57 @@ export default function Navbar({ variant = "app", onEmployerView }) {
               </button>
             </div>
           ) : (
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Link to="/login" className="navbar__link">
+            <div className="navbar__auth-actions">
+              <Link to="/login" className="navbar__link navbar__link--login">
                 Login
               </Link>
-              <Link to="/signup" className="cta-btn cta-btn--orange" style={{ padding: "6px 14px", fontSize: "0.85rem" }}>
+              <Link to="/signup" className="cta-btn cta-btn--orange cta-btn--sm">
                 Sign Up
               </Link>
             </div>
           )}
+
+          {/* Mobile hamburger toggle */}
+          <button
+            className="navbar__mobile-toggle"
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((v) => !v)}
+          >
+            <span className={`navbar__hamburger ${mobileMenuOpen ? "is-active" : ""}`}>
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      {mobileMenuOpen && (
+        <div className="navbar__mobile-drawer">
+          <div className="navbar__mobile-links" onClick={() => setMobileMenuOpen(false)}>
+            {centerLinks}
+            {!user ? (
+              <div className="navbar__mobile-auth">
+                <Link to="/login" className="navbar__link">
+                  Login
+                </Link>
+                <Link to="/signup" className="cta-btn cta-btn--orange" style={{ width: "100%", textAlign: "center" }}>
+                  Sign Up
+                </Link>
+              </div>
+            ) : (
+              <div className="navbar__mobile-auth">
+                <Link to="/profile" className="navbar__link">
+                  Profile ({displayName})
+                </Link>
+                <button onClick={handleLogout} className="navbar__link navbar__link--btn" style={{ textAlign: "left" }}>
+                  Log Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>
