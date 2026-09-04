@@ -46,10 +46,9 @@
 
 | Nama | Peran | GitHub |
 |------|-------|--------|
-| **Hasbi Imran (Haran751)** | Project Lead & Full Stack Developer | [GitHub](https://github.com/Haran751) |
-| **Nexora Frontend Team** | Frontend Developer | [GitHub](https://github.com/Haran751/Nexora-web) |
-| **Nexora Backend Team** | Backend Developer | [GitHub](https://github.com/Haran751/Nexora-web) |
-| **Nexora Design Team** | UI/UX Designer | [GitHub](https://github.com/Haran751/Nexora-web) |
+| **Hasbi Imran** | Frontend Developer | [GitHub](https://github.com/Haran751/Nexora-web) |
+| **Frazier Beltsazar Tarigan** | Backend Developer | [GitHub](https://github.com/Haran751/Nexora-web) |
+| **Ahmad Putra Ramadhan** | UI/UX Designer | [GitHub](https://github.com/Haran751/Nexora-web) |
 
 ---
 
