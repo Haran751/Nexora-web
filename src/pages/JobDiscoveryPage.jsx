@@ -264,114 +264,117 @@ export default function JobDiscoveryPage() {
 
   return (
     <div className="page disco-page">
-      {user && (
-        <Navbar variant={role === "employer" ? "employer" : "app"} onEmployerView={() => navigate("/employer")} />
-      )}
-      {!user && <Navbar variant="landing" />}
+      {/* STICKY HEADER: navbar + topbar nempel jadi satu */}
+      <div className="disco-sticky-header">
+        {user && (
+          <Navbar variant={role === "employer" ? "employer" : "app"} onEmployerView={() => navigate("/employer")} />
+        )}
+        {!user && <Navbar variant="landing" />}
 
-      {/* TOP SEARCH & QUICK FILTERS BAR (from design) */}
-      <div className="disco-topbar">
-        <div className="disco-topbar__inner">
-          {/* Role / Search Input */}
-          <div className="disco-topbar__item disco-topbar__search">
-            <SearchIcon />
-            <input
-              type="text"
-              placeholder="Designer, Engineer, Marketing…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") setQuery(search.trim());
-              }}
-            />
-            {search && (
-              <button
-                type="button"
-                className="disco-topbar__clear-search"
-                onClick={() => {
-                  setSearch("");
-                  setQuery("");
-                }}
-                aria-label="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <div className="disco-topbar__divider" />
-
-          {/* Work Location Dropdown */}
-          <div className="disco-topbar__item disco-topbar__select-wrap">
-            <PinIcon />
-            <select
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              aria-label="Work location"
-            >
-              {locationOptions.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc === "All Locations" ? "Work location" : loc}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="disco-topbar__divider" />
-
-          {/* Experience Dropdown */}
-          <div className="disco-topbar__item disco-topbar__select-wrap">
-            <BriefcaseIcon />
-            <select
-              value={experienceFilter}
-              onChange={(e) => setExperienceFilter(e.target.value)}
-              aria-label="Experience level"
-            >
-              {experienceOptions.map((exp) => (
-                <option key={exp} value={exp}>
-                  {exp === "All Levels" ? "Experience" : exp}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="disco-topbar__divider" />
-
-          {/* Pay Period Dropdown */}
-          <div className="disco-topbar__item disco-topbar__select-wrap">
-            <CardIcon />
-            <select
-              value={payPeriodFilter}
-              onChange={(e) => setPayPeriodFilter(e.target.value)}
-              aria-label="Pay frequency"
-            >
-              {payPeriodOptions.map((period) => (
-                <option key={period} value={period}>
-                  {period}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="disco-topbar__divider" />
-
-          {/* Salary Range Slider */}
-          <div className="disco-topbar__item disco-topbar__salary">
-            <div className="disco-topbar__salary-labels">
-              <span>Salary range</span>
-              <strong>${salaryMin} - ${salaryMax >= 1000 ? `${(salaryMax / 1000).toFixed(1)}k` : salaryMax}</strong>
-            </div>
-            <div className="disco-topbar__slider-track">
+        {/* TOP SEARCH & QUICK FILTERS BAR (from design) */}
+        <div className="disco-topbar">
+          <div className="disco-topbar__inner">
+            {/* Role / Search Input */}
+            <div className="disco-topbar__item disco-topbar__search">
+              <SearchIcon />
               <input
-                type="range"
-                min="300"
-                max="3500"
-                step="50"
-                value={salaryMax}
-                onChange={(e) => setSalaryMax(Number(e.target.value))}
-                className="disco-topbar__range-input"
-                aria-label="Max salary"
+                type="text"
+                placeholder="Designer, Engineer, Marketing…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setQuery(search.trim());
+                }}
               />
+              {search && (
+                <button
+                  type="button"
+                  className="disco-topbar__clear-search"
+                  onClick={() => {
+                    setSearch("");
+                    setQuery("");
+                  }}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="disco-topbar__divider" />
+
+            {/* Work Location Dropdown */}
+            <div className="disco-topbar__item disco-topbar__select-wrap">
+              <PinIcon />
+              <select
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                aria-label="Work location"
+              >
+                {locationOptions.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc === "All Locations" ? "Work location" : loc}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="disco-topbar__divider" />
+
+            {/* Experience Dropdown */}
+            <div className="disco-topbar__item disco-topbar__select-wrap">
+              <BriefcaseIcon />
+              <select
+                value={experienceFilter}
+                onChange={(e) => setExperienceFilter(e.target.value)}
+                aria-label="Experience level"
+              >
+                {experienceOptions.map((exp) => (
+                  <option key={exp} value={exp}>
+                    {exp === "All Levels" ? "Experience" : exp}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="disco-topbar__divider" />
+
+            {/* Pay Period Dropdown */}
+            <div className="disco-topbar__item disco-topbar__select-wrap">
+              <CardIcon />
+              <select
+                value={payPeriodFilter}
+                onChange={(e) => setPayPeriodFilter(e.target.value)}
+                aria-label="Pay frequency"
+              >
+                {payPeriodOptions.map((period) => (
+                  <option key={period} value={period}>
+                    {period}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="disco-topbar__divider" />
+
+            {/* Salary Range Slider */}
+            <div className="disco-topbar__item disco-topbar__salary">
+              <div className="disco-topbar__salary-labels">
+                <span>Salary range</span>
+                <strong>${salaryMin} - ${salaryMax >= 1000 ? `${(salaryMax / 1000).toFixed(1)}k` : salaryMax}</strong>
+              </div>
+              <div className="disco-topbar__slider-track">
+                <input
+                  type="range"
+                  min="300"
+                  max="3500"
+                  step="50"
+                  value={salaryMax}
+                  onChange={(e) => setSalaryMax(Number(e.target.value))}
+                  className="disco-topbar__range-input"
+                  aria-label="Max salary"
+                />
+              </div>
             </div>
           </div>
         </div>

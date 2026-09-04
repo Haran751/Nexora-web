@@ -16,22 +16,15 @@ function ActivityChart() {
   const innerH = h - pad.top - pad.bottom;
 
   const points = [
-    { x: 0, y: 300 },
-    { x: 60, y: 180 },
-    { x: 120, y: 110 },
-    { x: 180, y: 70 },
-    { x: 240, y: 60 },
-    { x: 300, y: 90 },
-    { x: 360, y: 150 },
-    { x: 420, y: 230 },
-    { x: 480, y: 320 },
-    { x: 540, y: 390 },
-    { x: 600, y: 430 },
-    { x: 660, y: 450 },
-    { x: 720, y: 460 },
-    { x: 780, y: 470 },
+    { x: 0, y: 80 },
+    { x: 130, y: 150 },
+    { x: 260, y: 220 },
+    { x: 390, y: 340 },
+    { x: 520, y: 410 },
+    { x: 650, y: 480 },
+    { x: 780, y: 520 },
   ];
-  const maxY = 1000;
+  const maxY = 600;
 
   const coord = (p) => ({
     x: pad.left + (p.x / 800) * innerW,
@@ -39,22 +32,30 @@ function ActivityChart() {
   });
 
   const pts = points.map(coord);
-  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const areaPath = `${linePath} L${pts[pts.length - 1].x},${pad.top + innerH} L${pts[0].x},${pad.top + innerH} Z`;
 
-  const yTicks = [0, 250, 500, 750, 1000];
-  const xLabels = ["kemarennya lagi", "kemaren", "kemaren banget", "tadi"];
+  const smoothPath = pts.reduce((acc, pt, i) => {
+    if (i === 0) return `M${pt.x.toFixed(1)},${pt.y.toFixed(1)}`;
+    const prev = pts[i - 1];
+    const cpx1 = prev.x + (pt.x - prev.x) * 0.4;
+    const cpx2 = pt.x - (pt.x - prev.x) * 0.4;
+    return `${acc} C${cpx1.toFixed(1)},${prev.y.toFixed(1)} ${cpx2.toFixed(1)},${pt.y.toFixed(1)} ${pt.x.toFixed(1)},${pt.y.toFixed(1)}`;
+  }, "");
+
+  const areaPath = `${smoothPath} L${pts[pts.length - 1].x},${pad.top + innerH} L${pts[0].x},${pad.top + innerH} Z`;
+
+  const yTicks = [0, 150, 300, 450, 600];
+  const xLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Activity over time">
+    <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Application activity over time">
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#632248" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#42154c" stopOpacity="0.03" />
+          <stop offset="0" stopColor="#632248" stopOpacity="0.3" />
+          <stop offset="1" stopColor="#42154c" stopOpacity="0.02" />
         </linearGradient>
         <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#632248" />
-          <stop offset="1" stopColor="#42154c" />
+          <stop offset="1" stopColor="#E8883C" />
         </linearGradient>
       </defs>
 
@@ -62,8 +63,8 @@ function ActivityChart() {
         const y = pad.top + innerH - (t / maxY) * innerH;
         return (
           <g key={t}>
-            <line x1={pad.left} y1={y} x2={w - pad.right} y2={y} stroke="#8B4A2A" strokeOpacity="0.5" />
-            <text x={pad.left - 10} y={y + 4} textAnchor="end" fontSize="13" fill="#3D1028" fontWeight="600">
+            <line x1={pad.left} y1={y} x2={w - pad.right} y2={y} stroke="#8B4A2A" strokeOpacity="0.12" strokeDasharray="4 4" />
+            <text x={pad.left - 10} y={y + 4} textAnchor="end" fontSize="12" fill="rgba(61,16,40,0.45)" fontWeight="500" fontFamily="Inter, sans-serif">
               {t}
             </text>
           </g>
@@ -71,39 +72,29 @@ function ActivityChart() {
       })}
 
       <path d={areaPath} fill="url(#areaGrad)" />
-      <path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={smoothPath} fill="none" stroke="url(#lineGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
 
-      <g>
-        {[
-          { label: "kemarennya lagi", x: pad.left + innerW * 0.12 },
-          { label: "kemaren", x: pad.left + innerW * 0.4 },
-          { label: "kemaren banget", x: pad.left + innerW * 0.68 },
-          { label: "tadi", x: pad.left + innerW * 0.9 },
-        ].map((l, i) => (
+      {pts.map((pt, i) => (
+        <circle key={i} cx={pt.x.toFixed(1)} cy={pt.y.toFixed(1)} r="4" fill="#fff" stroke="#632248" strokeWidth="2" />
+      ))}
+
+      {xLabels.map((label, i) => {
+        const xPos = pad.left + (i / (xLabels.length - 1)) * innerW;
+        return (
           <text
             key={i}
-            x={l.x}
-            y={h - 14}
-            textAnchor={i === 3 ? "end" : "start"}
-            fontSize="13"
-            fill="#3D1028"
-            fontWeight="600"
+            x={xPos}
+            y={h - 12}
+            textAnchor="middle"
+            fontSize="12"
+            fill="rgba(61,16,40,0.5)"
+            fontWeight="500"
+            fontFamily="Inter, sans-serif"
           >
-            {l.label}
+            {label}
           </text>
-        ))}
-      </g>
-
-      <rect
-        x={pad.left}
-        y={pad.top}
-        width={innerW}
-        height={innerH}
-        fill="none"
-        stroke="var(--accent-orange)"
-        strokeWidth="2"
-        rx="10"
-      />
+        );
+      })}
     </svg>
   );
 }
