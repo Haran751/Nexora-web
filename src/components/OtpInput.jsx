@@ -6,7 +6,7 @@ export default function OtpInput({
   onResend,
   loading = false,
   error = "",
-  demoCode = "",
+  
 }) {
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [timer, setTimer] = useState(60);
@@ -102,13 +102,7 @@ export default function OtpInput({
     inputRefs.current[0]?.focus();
   };
 
-  const handleAutofillDemo = () => {
-    if (!demoCode) return;
-    const split = demoCode.split("").slice(0, 6);
-    setDigits(split);
-    onComplete(demoCode);
-  };
-
+  
   return (
     <div className="otp-container">
       {demoCode && (

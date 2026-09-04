@@ -205,7 +205,7 @@ export async function createJob(jobData, userId) {
   // Local fallback
   const newJob = {
     id: `local-${Date.now()}`,
-    employerId: userId || "demo-employer",
+    employerId: userId ,
     title: jobData.title,
     company: jobData.company || "Your Company",
     location: jobData.location || "Jakarta",

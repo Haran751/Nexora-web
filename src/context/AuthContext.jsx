@@ -270,7 +270,7 @@ export function AuthProvider({ children }) {
 
     return {
       user: pendingUser,
-      demoCode: sendRes?.demo ? code : null,
+      demoCode: null,
     };
   }, []);
 
@@ -331,7 +331,7 @@ export function AuthProvider({ children }) {
       setUser(targetUser);
       setProfile(newProfile);
       saveProfile(newProfile);
-      localStorage.setItem(DEMO_USER_KEY, JSON.stringify({ user: targetUser, profile: newProfile }));
+      
       sessionStorage.removeItem("nexora_pending_signup");
       return { user: targetUser };
     }
@@ -356,7 +356,7 @@ export function AuthProvider({ children }) {
       type,
     });
 
-    return { demoCode: sendRes?.demo ? code : null };
+    return { demoCode: null };
   }, []);
 
   // 4. Request Password Reset (Kirim OTP ke Gmail)
@@ -371,7 +371,7 @@ export function AuthProvider({ children }) {
       type: "recovery",
     });
 
-    return { success: true, demoCode: sendRes?.demo ? code : null };
+    return { success: true, demoCode: null };
   }, []);
 
   // 5. Update Password setelah OTP terverifikasi
@@ -423,7 +423,7 @@ export function AuthProvider({ children }) {
           try {
             const parsed = JSON.parse(savedDemo);
             parsed.updatedAt = new Date().toISOString();
-            localStorage.setItem(DEMO_USER_KEY, JSON.stringify(parsed));
+            
           } catch {}
         }
         return { success: true, demo: true };
@@ -457,7 +457,7 @@ export function AuthProvider({ children }) {
       };
       setUser(mockUser);
       setProfile(mockProfile);
-      localStorage.setItem(DEMO_USER_KEY, JSON.stringify({ user: mockUser, profile: mockProfile }));
+      
       return { user: mockUser };
     }
   }, []);
@@ -469,7 +469,7 @@ export function AuthProvider({ children }) {
     }
     setUser(null);
     setProfile(DEFAULT_PROFILE);
-    localStorage.removeItem(DEMO_USER_KEY);
+    
   }, []);
 
   const updateProfileData = useCallback(async (updates) => {
@@ -502,7 +502,7 @@ export function AuthProvider({ children }) {
 
       if (error) throw error;
     } else if (user) {
-      localStorage.setItem(DEMO_USER_KEY, JSON.stringify({ user, profile: next }));
+      
     }
   }, [profile, user]);
 
