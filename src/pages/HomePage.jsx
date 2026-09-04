@@ -153,17 +153,26 @@ export default function HomePage() {
             </div>
 
             <div className="card card--alt">
-              <h3>Discover Jobs!</h3>
-              <Link to="/jobs" className="disco-bar">
-                Browse Internships →
-              </Link>
-              <Link to="/jobs" className="disco-bar" style={{ background: "var(--accent-orange-dark)" }}>
-                Browse Entry Level →
-              </Link>
-              {role === "employer" && (
-                <Link to="/employer" className="disco-bar" style={{ background: "#42154C", marginTop: 8 }}>
-                  Post a New Job Vacancy →
-                </Link>
+              {role === "employer" ? (
+                <>
+                  <h3>Employer Hub</h3>
+                  <Link to="/employer" className="disco-bar">
+                    Post a New Job Vacancy →
+                  </Link>
+                  <Link to="/employer" className="disco-bar" style={{ background: "var(--accent-orange-dark)" }}>
+                    Manage Posted Jobs →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h3>Discover Jobs!</h3>
+                  <Link to="/jobs" className="disco-bar">
+                    Browse Internships →
+                  </Link>
+                  <Link to="/jobs" className="disco-bar" style={{ background: "var(--accent-orange-dark)" }}>
+                    Browse Entry Level →
+                  </Link>
+                </>
               )}
             </div>
           </div>

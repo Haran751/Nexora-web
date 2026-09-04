@@ -1,6 +1,9 @@
 import { lazy, Suspense } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext.jsx";
+import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+import ScrollToTop from "./components/ScrollToTop.jsx";
+
+// Statically import LandingPage so root route renders immediately without lazy-load waterfall
 import LandingPage from "./pages/LandingPage.jsx";
 
 // Route-level code splitting for non-critical paths
@@ -50,7 +53,8 @@ function PageFallback() {
 
 export default function App() {
   return (
-    <HashRouter>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <ScrollToTop />
       <AuthProvider>
         <Suspense fallback={<PageFallback />}>
           <Routes>

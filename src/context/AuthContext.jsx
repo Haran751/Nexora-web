@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
 import { loadProfile, saveProfile, DEFAULT_PROFILE } from "../lib/profile.js";
 import { sendOtpEmail } from "../lib/sendOtp.js";
+import { isValidEmail, sanitizeText } from "../lib/security.js";
 
 const AuthContext = createContext(null);
 
@@ -94,60 +95,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [loading, setLoading] = useState(true);
 
-  // Inisialisasi status user & profile
-  useEffect(() => {
-    async function initAuth() {
-      if (isSupabaseConfigured) {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            setUser(session.user);
-            await fetchProfile(session.user.id);
-          } else {
-            setUser(null);
-            setProfile(DEFAULT_PROFILE);
-          }
-        } catch (err) {
-          console.error("Supabase getSession error:", err);
-        } finally {
-          setLoading(false);
-        }
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            if (session?.user) {
-              setUser(session.user);
-              await fetchProfile(session.user.id);
-            } else {
-              setUser(null);
-              setProfile(DEFAULT_PROFILE);
-            }
-            setLoading(false);
-          }
-        );
-
-        return () => subscription?.unsubscribe();
-      } else {
-        const savedDemo = localStorage.getItem(DEMO_USER_KEY);
-        if (savedDemo) {
-          try {
-            const parsed = JSON.parse(savedDemo);
-            setUser(parsed.user);
-            setProfile(parsed.profile || loadProfile());
-          } catch {
-            setUser(null);
-          }
-        } else {
-          setProfile(loadProfile());
-        }
-        setLoading(false);
-      }
-    }
-
-    initAuth();
-  }, []);
-
-  async function fetchProfile(userId) {
+  const fetchProfile = useCallback(async (userId) => {
     if (!userId) return;
     try {
       const { data, error } = await supabase
@@ -209,10 +157,95 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error("fetchProfile error:", err);
     }
-  }
+  }, []);
 
+  // Inisialisasi status user & profile
+  useEffect(() => {
+    let mounted = true;
+    let authInitialized = false;
+
+    async function initAuth() {
+      // Check if user has an existing session in localStorage
+      let hasStoredSession = false;
+      try {
+        hasStoredSession = Object.keys(localStorage).some(
+          (k) => (k.startsWith("sb-") && k.endsWith("-auth-token")) || k === DEMO_USER_KEY
+        );
+      } catch {}
+
+      if (!hasStoredSession) {
+        // Fast path for first-time / guest visitors (instant initial paint)
+        setUser(null);
+        setProfile(DEFAULT_PROFILE);
+        setLoading(false);
+      }
+
+      if (isSupabaseConfigured) {
+        try {
+          if (hasStoredSession) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!mounted) return;
+            if (session?.user) {
+              setUser(session.user);
+              await fetchProfile(session.user.id);
+            } else {
+              setUser(null);
+              setProfile(DEFAULT_PROFILE);
+            }
+          }
+        } catch (err) {
+          console.error("Supabase getSession error:", err);
+        } finally {
+          if (mounted) {
+            authInitialized = true;
+            setLoading(false);
+          }
+        }
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (!mounted) return;
+            // Prevent redundant fetch on INITIAL_SESSION if already loaded
+            if (event === "INITIAL_SESSION" && authInitialized) return;
+            if (session?.user) {
+              setUser(session.user);
+              await fetchProfile(session.user.id);
+            } else {
+              setUser(null);
+              setProfile(DEFAULT_PROFILE);
+            }
+            setLoading(false);
+          }
+        );
+
+        return () => {
+          mounted = false;
+          subscription?.unsubscribe();
+        };
+      } else {
+        const savedDemo = localStorage.getItem(DEMO_USER_KEY);
+        if (savedDemo) {
+          try {
+            const parsed = JSON.parse(savedDemo);
+            setUser(parsed.user);
+            setProfile(parsed.profile || loadProfile());
+          } catch {
+            setUser(null);
+          }
+        } else {
+          setProfile(loadProfile());
+        }
+        setLoading(false);
+        return () => {
+          mounted = false;
+        };
+      }
+    }
+
+    initAuth();
+  }, [fetchProfile]);
   // 1. Sign Up (Generate 6-digit OTP & Kirim via EmailJS ke Gmail)
-  async function signUp({ email, password, fullName, role = "worker", companyName = "" }) {
+  const signUp = useCallback(async ({ email, password, fullName, role = "worker", companyName = "" }) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setStoredOtp(email, code);
 
@@ -239,10 +272,10 @@ export function AuthProvider({ children }) {
       user: pendingUser,
       demoCode: sendRes?.demo ? code : null,
     };
-  }
+  }, []);
 
   // 2. Verifikasi Kode OTP (Signup atau Recovery)
-  async function verifyOtp({ email, token, type = "signup" }) {
+  const verifyOtp = useCallback(async ({ email, token, type = "signup" }) => {
     const savedCode = getStoredOtp(email);
 
     if (!savedCode) {
@@ -309,7 +342,7 @@ export function AuthProvider({ children }) {
   }
 
   // 3. Resend OTP Code ke Gmail
-  async function resendOtp({ email, type = "signup" }) {
+  const resendOtp = useCallback(async ({ email, type = "signup" }) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setStoredOtp(email, code);
 
@@ -324,10 +357,10 @@ export function AuthProvider({ children }) {
     });
 
     return { demoCode: sendRes?.demo ? code : null };
-  }
+  }, []);
 
   // 4. Request Password Reset (Kirim OTP ke Gmail)
-  async function resetPasswordForEmail(email) {
+  const resetPasswordForEmail = useCallback(async (email) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     setStoredOtp(email, code);
 
@@ -339,10 +372,10 @@ export function AuthProvider({ children }) {
     });
 
     return { success: true, demoCode: sendRes?.demo ? code : null };
-  }
+  }, []);
 
   // 5. Update Password setelah OTP terverifikasi
-  async function updateUserPassword(payload) {
+  const updateUserPassword = useCallback(async (payload) => {
     const newPassword = typeof payload === "string" ? payload : payload?.newPassword;
     const email = typeof payload === "object" ? payload?.email : user?.email;
     const resetToken = typeof payload === "object" ? payload?.resetToken : null;
@@ -371,46 +404,39 @@ export function AuthProvider({ children }) {
         clearResetToken();
         return { success: true };
       }
-    } catch (apiErr) {
-      console.warn("API /api/update-password call error:", apiErr);
-    }
-
-    // 2. Fallback direct client RPC ke Supabase jika fungsi reset_password_by_email ada
-    if (isSupabaseConfigured && email) {
-      try {
-        const { data: rpcSuccess, error: rpcErr } = await supabase.rpc("reset_password_by_email", {
-          user_email: email.trim(),
-          new_plain_password: newPassword,
-        });
-        if (!rpcErr && rpcSuccess) {
-          return { success: true };
-        }
-      } catch (e) {
-        console.warn("RPC reset_password_by_email error:", e);
+      if (!res.ok && data.error) {
+        throw new Error(data.error);
       }
-    }
+    } catch (apiErr) {
+      console.warn("API /api/update-password error:", apiErr.message);
 
-    // 3. Jika user sedang aktif login di session
-    if (isSupabaseConfigured && user) {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (!error) return { success: true };
-    }
+      // 2. Jika user sedang aktif login di session resmi Supabase
+      if (isSupabaseConfigured && user) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (!error) return { success: true };
+      }
 
-    // 4. Update local demo storage jika ada
-    const savedDemo = localStorage.getItem(DEMO_USER_KEY);
-    if (savedDemo) {
-      try {
-        const parsed = JSON.parse(savedDemo);
-        parsed.password = newPassword;
-        localStorage.setItem(DEMO_USER_KEY, JSON.stringify(parsed));
-      } catch {}
+      // 3. Fallback demo storage jika berjalan tanpa Supabase (offline demo penjurian)
+      if (!isSupabaseConfigured) {
+        const savedDemo = localStorage.getItem(DEMO_USER_KEY);
+        if (savedDemo) {
+          try {
+            const parsed = JSON.parse(savedDemo);
+            parsed.updatedAt = new Date().toISOString();
+            localStorage.setItem(DEMO_USER_KEY, JSON.stringify(parsed));
+          } catch {}
+        }
+        return { success: true, demo: true };
+      }
+
+      throw apiErr;
     }
 
     return { success: true };
-  }
+  }, [user]);
 
   // 6. Sign In
-  async function signIn({ email, password }) {
+  const signIn = useCallback(async ({ email, password }) => {
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -434,9 +460,9 @@ export function AuthProvider({ children }) {
       localStorage.setItem(DEMO_USER_KEY, JSON.stringify({ user: mockUser, profile: mockProfile }));
       return { user: mockUser };
     }
-  }
+  }, []);
 
-  async function signOut() {
+  const signOut = useCallback(async () => {
     if (isSupabaseConfigured) {
       const { error } = await supabase.auth.signOut();
       if (error) console.error("Sign out error:", error);
@@ -444,9 +470,9 @@ export function AuthProvider({ children }) {
     setUser(null);
     setProfile(DEFAULT_PROFILE);
     localStorage.removeItem(DEMO_USER_KEY);
-  }
+  }, []);
 
-  async function updateProfileData(updates) {
+  const updateProfileData = useCallback(async (updates) => {
     const next = { ...profile, ...updates };
     setProfile(next);
     saveProfile(next);
@@ -478,28 +504,41 @@ export function AuthProvider({ children }) {
     } else if (user) {
       localStorage.setItem(DEMO_USER_KEY, JSON.stringify({ user, profile: next }));
     }
-  }
+  }, [profile, user]);
 
   const role = profile?.role || user?.user_metadata?.role || "worker";
 
+  const contextValue = useMemo(() => ({
+    user,
+    profile,
+    role,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+    verifyOtp,
+    resendOtp,
+    resetPasswordForEmail,
+    updateUserPassword,
+    updateProfile: updateProfileData,
+    isSupabaseConfigured,
+  }), [
+    user,
+    profile,
+    role,
+    loading,
+    signUp,
+    signIn,
+    signOut,
+    verifyOtp,
+    resendOtp,
+    resetPasswordForEmail,
+    updateUserPassword,
+    updateProfileData,
+  ]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        role,
-        loading,
-        signUp,
-        signIn,
-        signOut,
-        verifyOtp,
-        resendOtp,
-        resetPasswordForEmail,
-        updateUserPassword,
-        updateProfile: updateProfileData,
-        isSupabaseConfigured,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

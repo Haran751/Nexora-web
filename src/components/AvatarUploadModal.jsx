@@ -25,13 +25,14 @@ export default function AvatarUploadModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setErrorMsg("File harus berupa gambar (JPG, PNG, WebP).");
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+    if (!ALLOWED.includes(file.type)) {
+      setErrorMsg("File harus berupa format gambar JPG, PNG, atau WebP.");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setErrorMsg("Ukuran file maksimal 10MB sebelum kompresi.");
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg("Ukuran file maksimal 5MB sebelum kompresi.");
       return;
     }
 

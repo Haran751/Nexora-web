@@ -6,6 +6,21 @@ import HeroArt from "../components/HeroArt.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
+const MatchSimulator = lazy(() => import("../components/MatchSimulator.jsx"));
+
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" strokeLinecap="round" />
+  </svg>
+);
+
+const previewJobs = [
+  { match: "96%", title: "Frontend Developer Intern", company: "Nexora Studio", tags: ["Jakarta", "Hybrid"] },
+  { match: "88%", title: "UI/UX Designer Grad", company: "Brightmind Agency", tags: ["Bandung", "On-site"] },
+  { match: "74%", title: "Data Analyst (Entry)", company: "CloudNine Analytics", tags: ["Remote"] },
+];
+
 export default function LandingPage() {
   const { user, role } = useAuth();
   const revealRef = useScrollReveal();
@@ -222,7 +237,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
 
         {/* Section 5: How It Works Flow */}
         <section className="how-it-works scroll-reveal" data-delay="160">

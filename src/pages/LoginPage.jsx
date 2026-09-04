@@ -42,11 +42,27 @@ export default function LoginPage() {
 
   return (
     <div className="signup login-page">
-      <HeroArt width={767} height={633} className="signup__art-bg" />
+      <div className="signup__topbar">
+        <button className="signup__back" onClick={() => navigate(-1)} aria-label="Go back">
+          <span aria-hidden="true">←</span> Back
+        </button>
+        <Link to="/" className="signup__brand">
+          <img src="/logo-nexora.webp" alt="Nexora logo" width="38" height="38" loading="lazy" decoding="async" />
+          Nexora
+        </Link>
+      </div>
+
+      {/* Sharp vector ambient background effects */}
+      <div className="signup__bg-art" aria-hidden="true">
+        <div className="signup__bg-glow signup__bg-glow--1" />
+        <div className="signup__bg-glow signup__bg-glow--2" />
+        <div className="signup__bg-glow signup__bg-glow--3" />
+      </div>
+
       <h1 className="signup__title">Welcome Back</h1>
       <p className="signup__sub">Log in to your Nexora account</p>
 
-      <form className="signup-form signup-form--worker" onSubmit={handleSubmit} noValidate>
+      <form className="signup-form signup-form--worker login-page__form" onSubmit={handleSubmit} noValidate>
         {authError && (
           <div
             style={{

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 export function PlayIcon() {
-  return <span className="cta-btn__play" aria-hidden="true" />;
+  return null;
 }
 
 export default function CtaButton({

@@ -6,6 +6,7 @@ import { loadProfile, saveProfile, profilePercent } from "../lib/profile.js";
 import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import AvatarUploadModal from "../components/AvatarUploadModal.jsx";
+import { sanitizeUrl } from "../lib/security.js";
 
 function ActivityChart() {
   const w = 800;
@@ -48,8 +49,12 @@ function ActivityChart() {
     <svg viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Activity over time">
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#4C7DFF" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#4C7DFF" stopOpacity="0.02" />
+          <stop offset="0" stopColor="#632248" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#42154c" stopOpacity="0.03" />
+        </linearGradient>
+        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#632248" />
+          <stop offset="1" stopColor="#42154c" />
         </linearGradient>
       </defs>
 
@@ -66,7 +71,7 @@ function ActivityChart() {
       })}
 
       <path d={areaPath} fill="url(#areaGrad)" />
-      <path d={linePath} fill="none" stroke="#4C7DFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={linePath} fill="none" stroke="url(#lineGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
       <g>
         {[
@@ -100,6 +105,158 @@ function ActivityChart() {
         rx="10"
       />
     </svg>
+  );
+}
+
+const SKILL_PALETTE = ["#42154C", "#632248", "#E8883C", "#C87080", "#E8A0A8", "#4C7DFF", "#7D5295"];
+
+function SkillDonutChart({ skills = [], skillPercentages = {}, onSavePercentages }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const effectiveSkills = Array.isArray(skills) && skills.length > 0
+    ? skills
+    : ["Editing", "Design", "Photography"];
+
+  const [localValues, setLocalValues] = useState(() => {
+    const map = { ...skillPercentages };
+    effectiveSkills.forEach((s, i) => {
+      if (typeof map[s] !== "number") {
+        map[s] = i === 0 ? 50 : i === 1 ? 30 : i === 2 ? 20 : 15;
+      }
+    });
+    return map;
+  });
+
+  useEffect(() => {
+    setLocalValues((prev) => {
+      const next = { ...prev };
+      effectiveSkills.forEach((s, i) => {
+        if (typeof skillPercentages[s] === "number") {
+          next[s] = skillPercentages[s];
+        } else if (typeof next[s] !== "number") {
+          next[s] = i === 0 ? 50 : i === 1 ? 30 : i === 2 ? 20 : 15;
+        }
+      });
+      return next;
+    });
+  }, [skills, skillPercentages]);
+
+  const handleSliderChange = (skill, val) => {
+    setLocalValues((prev) => ({ ...prev, [skill]: Number(val) }));
+  };
+
+  const handleSave = () => {
+    if (onSavePercentages) {
+      onSavePercentages(localValues);
+    }
+    setIsEditing(false);
+  };
+
+  const activeSkillsList = effectiveSkills.slice(0, 5);
+  const segments = activeSkillsList.map((s, i) => ({
+    label: s,
+    value: Math.max(1, localValues[s] ?? (i === 0 ? 50 : i === 1 ? 30 : 20)),
+    color: SKILL_PALETTE[i % SKILL_PALETTE.length],
+  }));
+
+  const r = 80;
+  const c = 2 * Math.PI * r;
+  const total = segments.reduce((s, x) => s + x.value, 0);
+
+  let acc = 0;
+  const arcs = segments.map((seg) => {
+    const frac = total > 0 ? seg.value / total : 0;
+    const offset = acc * c;
+    const len = frac * c;
+    acc += frac;
+    return { ...seg, len, offset };
+  });
+
+  return (
+    <div className="skill-donut-wrap">
+      <div className="skill-donut-head">
+        <button
+          type="button"
+          className="cta-btn cta-btn--outline skill-donut__edit-btn"
+          onClick={() => {
+            if (isEditing) handleSave();
+            else setIsEditing(true);
+          }}
+        >
+          {isEditing ? "✓ Save Percentages" : "✎ Edit Percentages"}
+        </button>
+      </div>
+
+      <div className="skill-donut">
+        <div className="skill-donut__chart">
+          <svg viewBox="0 0 200 200" role="img" aria-label="Skill breakdown">
+            <circle
+              cx="100"
+              cy="100"
+              r={r}
+              fill="none"
+              stroke="#EFE3E8"
+              strokeWidth="26"
+              className="skill-donut__track"
+            />
+            {arcs.map((seg, i) => (
+              <circle
+                key={i}
+                cx="100"
+                cy="100"
+                r={r}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth="26"
+                strokeDasharray={`${seg.len} ${c - seg.len}`}
+                strokeDashoffset={-seg.offset}
+                transform="rotate(-90 100 100)"
+                strokeLinecap="butt"
+              />
+            ))}
+          </svg>
+          <div className="skill-donut__center">
+            <strong>{total}%</strong>
+          </div>
+        </div>
+        <div className="skill-donut__legend">
+          {segments.map((seg) => (
+            <div className="skill-donut__legend-item" key={seg.label}>
+              <span className="skill-donut__dot" style={{ background: seg.color }} />
+              <span className="skill-donut__legend-label">{seg.label}</span>
+              <span className="skill-donut__legend-value">{seg.value}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {isEditing && (
+        <div className="skill-donut__editor">
+          <p className="skill-donut__editor-hint">
+            Adjust percentage for each skill:
+          </p>
+          <div className="skill-donut__editor-grid">
+            {activeSkillsList.map((skill, i) => (
+              <div className="skill-donut__editor-row" key={skill}>
+                <span className="skill-donut__editor-dot" style={{ background: SKILL_PALETTE[i % SKILL_PALETTE.length] }} />
+                <label className="skill-donut__editor-name">{skill}</label>
+                <input
+                  type="range"
+                  min="5"
+                  max="100"
+                  step="5"
+                  value={localValues[skill] ?? 50}
+                  onChange={(e) => handleSliderChange(skill, e.target.value)}
+                  className="skill-donut__slider"
+                />
+                <span className="skill-donut__editor-val">
+                  {localValues[skill] ?? 50}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -284,10 +441,6 @@ export default function ProfilePage() {
             >
               {profile.avatarUrl ? "Ubah Foto Profil" : "+ Pasang Foto Profil"}
             </button>
-          </div>
-          <div className="profile__meta">
-            <div className="profile__meta-label">birthday / place of birth</div>
-            <div className="profile__meta-line" />
           </div>
         </div>
 
@@ -476,9 +629,9 @@ export default function ProfilePage() {
                   <div className="profile-subcard__view">
                     <strong>{item.title || "Project title"}</strong>
                     {item.description && <p>{item.description}</p>}
-                    {item.url && (
-                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="view-job">
-                        {item.url}
+                    {item.url && sanitizeUrl(item.url) && (
+                      <a href={sanitizeUrl(item.url)} target="_blank" rel="noopener noreferrer" className="view-job">
+                        {sanitizeUrl(item.url)}
                       </a>
                     )}
                   </div>
@@ -541,6 +694,15 @@ export default function ProfilePage() {
           <div className="chart">
             <ActivityChart />
           </div>
+        </div>
+
+        <div className="profile__skill scroll-reveal">
+          <h3>Skill</h3>
+          <SkillDonutChart
+            skills={profile.skills}
+            skillPercentages={profile.skillPercentages || {}}
+            onSavePercentages={(percentages) => set({ skillPercentages: percentages })}
+          />
         </div>
 
         <AvatarUploadModal

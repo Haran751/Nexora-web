@@ -8,10 +8,17 @@ import { supabase, isSupabaseConfigured } from "./supabase.js";
  * @param {number} quality Kualitas kompresi JPEG/WebP (0.1 - 1.0)
  * @returns {Promise<{ blob: Blob, dataUrl: string, sizeKb: number }>}
  */
+const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_INPUT_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 export function compressImage(file, maxWidth = 500, maxHeight = 500, quality = 0.85) {
   return new Promise((resolve, reject) => {
-    if (!file || !file.type.startsWith("image/")) {
-      return reject(new Error("File yang dipilih bukan gambar yang valid."));
+    if (!file || !ALLOWED_MIME_TYPES.has(file.type)) {
+      return reject(new Error("Format file harus berupa gambar valid (JPEG, PNG, atau WebP)."));
+    }
+
+    if (file.size > MAX_INPUT_FILE_SIZE) {
+      return reject(new Error("Ukuran file maksimal 5MB sebelum kompresi."));
     }
 
     const reader = new FileReader();

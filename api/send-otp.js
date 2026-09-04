@@ -1,4 +1,7 @@
 import nodemailer from "nodemailer";
+import { checkRateLimit, storeRecoveryOtp } from "./_store.js";
+
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_REGEX = /^\d{6}$/;
@@ -37,18 +40,23 @@ function checkRateLimit(key, maxRequests = 5, windowMs = 10 * 60 * 1000) {
 }
 
 export default async function handler(req, res) {
+  // Security headers
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Parse body (bisa berupa object JSON atau string JSON)
+  // Parse body safely
   let body = req.body;
   if (typeof body === "string") {
     try {
       body = JSON.parse(body);
     } catch {
-      body = {};
+      return res.status(400).json({ error: "Malformed JSON payload" });
     }
   }
 
@@ -80,9 +88,9 @@ export default async function handler(req, res) {
   const gmailUser = process.env.GMAIL_USER?.trim();
   const gmailPass = process.env.GMAIL_APP_PASSWORD?.trim();
 
-  // Jika belum diset di .env, jalankan fallback mode demo agar tidak crash
+  // Mode demo fallback jika environment variables SMTP belum dikonfigurasi (memudahkan penjurian lomba)
   if (!gmailUser || !gmailPass) {
-    console.log(`[DEMO SMTP] Email ke: ${to_email} | Kode OTP: ${otp_code}`);
+    console.log(`[DEMO SMTP] Email tujuan: ${cleanEmail} | Kode OTP: ${otp_code}`);
     return res.status(200).json({
       success: true,
       demo: true,
@@ -99,12 +107,11 @@ export default async function handler(req, res) {
       },
     });
 
-    const isSignup = type === "signup";
+    const isSignup = cleanType === "signup";
     const subject = isSignup
       ? `Kode Verifikasi Akun Nexora: ${otp_code}`
       : `Kode Reset Password Nexora: ${otp_code}`;
 
-    // TEMPLATE EMAIL DITULIS LANGSUNG DI DALAM KODINGAN
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -155,16 +162,16 @@ export default async function handler(req, res) {
       </html>
     `;
 
-    const plainText = `Halo ${to_name},\n\n${
+    const plainText = `Halo ${cleanName},\n\n${
       isSignup
         ? "Terima kasih telah mendaftar di Nexora. Berikut kode verifikasi OTP Anda:"
         : "Berikut kode OTP reset password akun Nexora Anda:"
     }\n\nKODE OTP: ${otp_code}\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun demi keamanan akun Anda.\n\nSalam,\nNexora Platform`;
 
     await transporter.sendMail({
-      from: `"Nexora" <${gmailUser}>`,
+      from: `"Nexora Security" <${gmailUser}>`,
       replyTo: gmailUser,
-      to: to_email,
+      to: cleanEmail,
       subject,
       text: plainText,
       html: htmlContent,
@@ -178,7 +185,8 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, message: "Email OTP berhasil dikirim." });
   } catch (err) {
-    console.error("Gagal kirim email via SMTP Gmail:", err);
-    return res.status(500).json({ error: err.message || "Gagal mengirim email via SMTP." });
+    console.error("Gagal kirim email via SMTP Gmail:", err.message);
+    // Generic sanitized error message to prevent leaking internal SMTP config
+    return res.status(500).json({ error: "Gagal mengirim email verifikasi. Pastikan konfigurasi SMTP benar." });
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
@@ -136,6 +137,9 @@ export default function EmployerDashboardPage() {
                 {v}
               </button>
             ))}
+            <Link to="/employer/company" className="emp-sidebar__link emp-sidebar__link--company">
+              Company Profile
+            </Link>
           </aside>
 
           <section className="emp-main">

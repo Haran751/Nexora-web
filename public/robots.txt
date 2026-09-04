@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /employer
+Disallow: /profile
+Disallow: /cv
+Disallow: /applications
+Disallow: /saved
+
+Sitemap: https://nexora-web.vercel.app/sitemap.xml
