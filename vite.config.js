@@ -46,7 +46,6 @@ function securityHeadersPlugin() {
   };
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_REGEX = /^\d{6}$/;
 
 function escapeHtml(str) {
@@ -155,6 +154,9 @@ function smtpApiPlugin(env) {
           }
 
           const safeName = escapeHtml(String(to_name).slice(0, 100));
+          const cleanEmail = to_email.trim().toLowerCase();
+          const cleanCode = String(otp_code).trim();
+          const cleanName = safeName;
 
           const gmailUser = env.GMAIL_USER?.trim() || process.env.GMAIL_USER?.trim();
           const gmailPass = env.GMAIL_APP_PASSWORD?.trim() || process.env.GMAIL_APP_PASSWORD?.trim();
@@ -262,46 +264,10 @@ function smtpApiPlugin(env) {
             return;
           }
 
-          const { email, newPassword, token, otpCode } = body;
-
-          if (!email || typeof email !== "string" || !EMAIL_REGEX.test(email.trim())) {
-            res.statusCode = 400;
-            res.end(JSON.stringify({ error: "Format email tidak valid." }));
-            return;
-          }
-
-          if (!newPassword || typeof newPassword !== "string" || newPassword.length < 6) {
-            res.statusCode = 400;
-            res.end(JSON.stringify({ error: "Password baru minimal 6 karakter." }));
-            return;
-          }
-
-          const cleanEmail = email.trim().toLowerCase();
-          const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket?.remoteAddress || "local";
-
-          if (!checkDevRateLimit(`pwd-reset:${cleanEmail}`, 5, 15 * 60 * 1000) || !checkDevRateLimit(`pwd-reset-ip:${clientIp}`, 10, 15 * 60 * 1000)) {
-            res.statusCode = 429;
-            res.end(JSON.stringify({ error: "Terlalu banyak percobaan reset password. Tunggu 15 menit." }));
-            return;
-          }
-
-          // Verify recovery token/code from store
-          const providedCode = String(token || otpCode || "").trim();
-          const rec = devRecoveryStore.get(cleanEmail);
-          let isAuthorized = false;
-
-          if (rec && Date.now() <= rec.expiresAt) {
-            rec.attempts += 1;
-            if (rec.verified || (providedCode && providedCode === rec.code)) {
-              isAuthorized = true;
-              devRecoveryStore.delete(cleanEmail); // Single-use
-            }
-          }
-
           const { email, newPassword, resetToken } = body;
 
           // Input Validation
-          if (!email || !EMAIL_REGEX.test(email)) {
+          if (!email || typeof email !== "string" || !EMAIL_REGEX.test(email.trim())) {
             res.statusCode = 400;
             res.end(JSON.stringify({ error: "Valid email address is required" }));
             return;
@@ -320,8 +286,8 @@ function smtpApiPlugin(env) {
           }
 
           // Rate Limiting (max 5 attempts per 15 minutes)
-          const clientIp = req.socket?.remoteAddress || "local";
-          const rateLimitKey = `dev_pwd_${clientIp}_${email.toLowerCase()}`;
+          const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket?.remoteAddress || "local";
+          const rateLimitKey = `dev_pwd_${clientIp}_${email.trim().toLowerCase()}`;
           const rateCheck = checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000);
 
           if (!rateCheck.allowed) {
@@ -335,19 +301,13 @@ function smtpApiPlugin(env) {
 
           const supabaseUrl = env.VITE_SUPABASE_URL?.trim() || process.env.VITE_SUPABASE_URL?.trim();
           const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim() || process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+          const cleanEmail = email.trim().toLowerCase();
 
           res.setHeader("Content-Type", "application/json");
 
           if (!supabaseUrl || !serviceKey) {
             res.statusCode = 200;
             res.end(JSON.stringify({ success: true, demo: true, message: "Demo mode password updated" }));
-            return;
-          }
-
-          // Production / configured mode strictly requires authorization
-          if (!isAuthorized) {
-            res.statusCode = 403;
-            res.end(JSON.stringify({ error: "Otorisasi reset password tidak valid atau telah kedaluwarsa." }));
             return;
           }
 

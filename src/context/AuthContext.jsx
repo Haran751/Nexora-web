@@ -339,7 +339,7 @@ export function AuthProvider({ children }) {
     // Jika recovery, buat reset token jangka pendek (5 menit)
     const resetToken = setResetToken(email);
     return { success: true, resetToken };
-  }
+  }, []);
 
   // 3. Resend OTP Code ke Gmail
   const resendOtp = useCallback(async ({ email, type = "signup" }) => {

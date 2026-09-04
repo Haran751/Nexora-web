@@ -237,6 +237,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+        </section>
 
         {/* Section 5: How It Works Flow */}
         <section className="how-it-works scroll-reveal" data-delay="160">
