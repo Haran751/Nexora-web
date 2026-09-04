@@ -6,7 +6,6 @@ import HeroArt from "../components/HeroArt.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
-const MatchSimulator = lazy(() => import("../components/MatchSimulator.jsx"));
 
 const SearchIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
