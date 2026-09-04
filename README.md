@@ -16,7 +16,7 @@
 
   **Submission for ITECHNO CUP 2026 - Web Development**
 
-  **By Tim Nexora**
+  **By Tim pak eko kita boleh ajak anak 8 ga**
 
 </div>
 
@@ -44,8 +44,8 @@
 | Nama | Peran | GitHub |
 |------|-------|--------|
 | **Hasbi Imran** | Frontend Developer | [GitHub](https://github.com/Haran751) |
-| **Ahmad Putra Ramadhan** | Backend Developer | [GitHub](https://github.com/AhmadPR) |
-| **Frazier Beltsazar Tarigan** | UI/UX Designer | [GitHub](https://github.com/FrazierBT) |
+| **Ahmad Putra Ramadhan** | Backend Developer | [GitHub](https://github.com/makch1) |
+| **Frazier Beltsazar Tarigan** | UI/UX Designer | [GitHub](https://github.com/fzbt) |
 
 ---
 
