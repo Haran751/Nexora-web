@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 import Footer from "../components/Footer.jsx";
 import useScrollReveal from "../hooks/useScrollReveal.js";
@@ -16,6 +16,7 @@ const breakdownKeys = [
 
 export default function JobDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -116,7 +117,7 @@ export default function JobDetailPage() {
                 <h3 className="job-info__title">{job.title}</h3>
                 <p className="job-info__company">{job.company}</p>
               </div>
-              <span className="job-detail__match-badge">{job.match || 92}% Match</span>
+              {user && <span className="job-detail__match-badge">{job.match || 92}% Match</span>}
             </div>
 
             <div className="job-tags">
@@ -147,38 +148,55 @@ export default function JobDetailPage() {
             <button
               className="cta-btn cta-btn--pink job-info__apply"
               onClick={() => {
+                if (!user) {
+                  navigate("/login");
+                  return;
+                }
                 setSent(false);
                 setShowModal(true);
               }}
             >
-              <span className="cta-btn__play" /> Easy Apply
+              <span className="cta-btn__play" /> {user ? "Easy Apply" : "Login to Apply"}
             </button>
           </section>
 
           {/* Right — match breakdown */}
           <aside className="card match-card">
             <h3>Match Breakdown</h3>
-            <div className="match-card__score">
-              <b className="job-card__match-big">{job.match || 92}%</b>
-              <span>Overall Match</span>
-            </div>
-            {breakdownKeys.map(({ key, label }) => (
-              <div className="match-bar" key={key}>
-                <div className="match-bar__meta">
-                  <span>{label}</span>
-                  <strong>{breakdown[key] || 90}%</strong>
-                </div>
-                <div className="progress-track match-bar__track">
-                  <div
-                    className="progress-track__fill progress-track__fill--fixed"
-                    style={{ width: `${breakdown[key] || 90}%` }}
-                  />
-                </div>
+            {!user ? (
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <p style={{ color: "rgba(255,255,255,.8)", marginBottom: 12 }}>
+                  Log in to see how your skills match this role.
+                </p>
+                <Link to="/login" className="cta-btn cta-btn--orange">
+                  Login for Skill Match
+                </Link>
               </div>
-            ))}
-            <p className="match-card__note">
-              Based on your profile skills, experience, and preferences.
-            </p>
+            ) : (
+              <>
+                <div className="match-card__score">
+                  <b className="job-card__match-big">{job.match || 92}%</b>
+                  <span>Overall Match</span>
+                </div>
+                {breakdownKeys.map(({ key, label }) => (
+                  <div className="match-bar" key={key}>
+                    <div className="match-bar__meta">
+                      <span>{label}</span>
+                      <strong>{breakdown[key] || 90}%</strong>
+                    </div>
+                    <div className="progress-track match-bar__track">
+                      <div
+                        className="progress-track__fill progress-track__fill--fixed"
+                        style={{ width: `${breakdown[key] || 90}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <p className="match-card__note">
+                  Based on your profile skills, experience, and preferences.
+                </p>
+              </>
+            )}
           </aside>
         </div>
 

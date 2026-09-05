@@ -472,7 +472,7 @@ export default function JobDiscoveryPage() {
                 <div className="disco-main__sort-select">
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                     <option value="last_updated">Last updated</option>
-                    <option value="match_score">Best Match</option>
+                    {user && <option value="match_score">Best Match</option>}
                     <option value="salary_high">Salary: High to Low</option>
                   </select>
                   <SortIcon />
